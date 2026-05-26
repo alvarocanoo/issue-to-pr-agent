@@ -50,6 +50,12 @@ web/.next/
 web/out/
 web/*.tsbuildinfo
 
+# Playwright E2E artifacts
+web/playwright-report/
+web/test-results/
+web/blob-report/
+web/playwright/.cache/
+
 # A/B eval reports (persisted JSON locally, not in repo)
 eval-*-120b.json
 eval-*-20b.json

@@ -33,6 +33,8 @@ data/
 # But the dashboard's embedded snapshot IS source — must be committed.
 !web/data/
 !web/data/*.json
+!web/app/runs/
+!web/app/runs/**
 
 # IDE / OS
 .vscode/

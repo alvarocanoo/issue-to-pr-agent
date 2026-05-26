@@ -1,11 +1,15 @@
 # issue-to-pr-agent
 
+[![Live demo](https://img.shields.io/badge/live%20demo-alvarocanoo.github.io-22c55e.svg)](https://alvarocanoo.github.io/issue-to-pr-agent/)
 [![CI](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/ci.yml)
 [![Evals (trivial)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml/badge.svg)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml)
+[![Pages](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/pages.yml/badge.svg)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/pages.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://github.com/astral-sh/ruff)
 [![Type-checked: mypy strict](https://img.shields.io/badge/types-mypy%20strict-1f5082.svg)](http://mypy-lang.org/)
+
+**▶ Live dashboard:** https://alvarocanoo.github.io/issue-to-pr-agent/ — open any run to see the planner output, the Reflexion timeline of each retry, and the verifier verdict.
 
 > Autonomous coding agent that takes a GitHub issue URL and opens a pull request with a working fix, tests passing, full decision traces. **Hand-rolled tool loop** over **Groq Cloud** with open-source models (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`) — $0 per run on Groq's free tier.
 

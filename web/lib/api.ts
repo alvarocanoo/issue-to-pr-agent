@@ -1,6 +1,17 @@
-// Thin client over the FastAPI surface. Server- and client-callable.
+// Thin client over the FastAPI surface, with a build-time static fallback.
+//
+// In production on Vercel we don't host the FastAPI server, so we bake the most recent A/B
+// measurement into the bundle as static JSON. Set NEXT_PUBLIC_USE_STATIC=true to use that
+// embedded snapshot (the default for the public demo).
+//
+// For local dev, leave NEXT_PUBLIC_USE_STATIC unset and the client falls back to the live
+// FastAPI server at NEXT_PUBLIC_API_BASE.
+
+import staticRuns from "@/data/runs.json";
+import staticStats from "@/data/stats.json";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8765";
+const USE_STATIC = process.env.NEXT_PUBLIC_USE_STATIC === "true";
 
 export type HistoryEntry = {
   iteration: number;
@@ -57,14 +68,26 @@ async function jget<T>(path: string): Promise<T> {
 }
 
 export async function fetchStats(): Promise<Stats> {
+  if (USE_STATIC) return staticStats as Stats;
   return jget<Stats>("/stats");
 }
 
 export async function fetchRuns(limit = 50): Promise<{ items: StoredRun[]; count: number }> {
+  if (USE_STATIC) {
+    const items = (staticRuns.items as StoredRun[]).slice(0, limit);
+    return { items, count: staticRuns.count };
+  }
   return jget<{ items: StoredRun[]; count: number }>(`/runs?limit=${limit}`);
 }
 
 export async function fetchRun(id: number): Promise<StoredRun> {
+  if (USE_STATIC) {
+    const found = (staticRuns.items as StoredRun[]).find((r) => r.id === id);
+    if (!found) {
+      throw new Error(`run ${id} not found in static data`);
+    }
+    return found;
+  }
   return jget<StoredRun>(`/runs/${id}`);
 }
 

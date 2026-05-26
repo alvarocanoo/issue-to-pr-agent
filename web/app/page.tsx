@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { fetchRuns, fetchStats, formatElapsed, formatTokens, type StoredRun } from "@/lib/api";
 
-export const dynamic = "force-dynamic";
+// Static so the GitHub Pages export works; in `npm run dev` Next.js ignores this and
+// re-renders on every request anyway, so the live mode keeps working locally.
+export const dynamic = "force-static";
 
 export default async function Home() {
   let runs: StoredRun[] = [];

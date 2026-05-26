@@ -1,7 +1,13 @@
 name: Evals (trivial)
 
 on:
-  push:
+  # Manual only by default. The Groq free tier (200k tokens/day) is shared across
+  # every workflow run; auto-triggering on every push burns the daily quota in two
+  # eval cycles. Run this from the Actions tab when you want a fresh measurement,
+  # or open a PR that touches the agent code — pull_request runs are gated by
+  # paths so they only fire for changes that actually affect resolved@1.
+  workflow_dispatch:
+  pull_request:
     branches: [main]
     paths:
       - 'evals/**'
@@ -10,17 +16,6 @@ on:
       - 'src/issue_to_pr/sandbox/**'
       - 'src/issue_to_pr/issues.py'
       - 'src/issue_to_pr/settings.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - '.github/workflows/evals.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'evals/**'
-      - 'src/issue_to_pr/executor/**'
-      - 'src/issue_to_pr/llm/**'
-      - 'src/issue_to_pr/sandbox/**'
-  workflow_dispatch:
 
 permissions:
   contents: read

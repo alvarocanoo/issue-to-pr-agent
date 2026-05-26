@@ -34,7 +34,7 @@ touches the executor / sandbox / LLM client.
 
 | Metric | Target | **Measured** | Source |
 |---|---|---|---|
-| `resolved@1` on trivial issue set (10 issues) | ≥ 70% | **100% (10/10)** | [`evals.yml` CI artifact](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml) |
+| `resolved@1` on trivial issue set (10 issues) | ≥ 70% | **100% (10/10)** | local run 2026-05-26; reproduce via [`evals.yml` workflow_dispatch](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml) |
 | Mean wall-clock per issue | ≤ 15 min | **24.3 s** | eval-report.json |
 | Mean tokens per issue | — | ~9 040 (prompt+completion) | eval-report.json |
 | Cost per issue | $0 (free tier) | **$0** — within Groq free-tier RPM/RPD | [console.groq.com](https://console.groq.com/docs/rate-limits) |
@@ -44,6 +44,11 @@ touches the executor / sandbox / LLM client.
 The trivial set is a sanity gate, not the real test of the agent — every issue is solvable in a
 single-line edit. SWE-bench Lite (300 instances of real bugs from popular Python projects)
 is the published benchmark and lands in Week 4.
+
+**About the eval gate**: the `Evals (trivial)` workflow runs on `workflow_dispatch` (manual) and on
+pull requests that touch the agent code, not on every push. The Groq free tier caps daily tokens
+at 200 k and the trivial set burns ~90 k per run; running on every push exhausts the quota in two
+cycles. To re-measure, click "Run workflow" in the Actions tab or open a PR.
 
 ## Architecture (1 paragraph)
 

@@ -14,12 +14,21 @@ Why a wrapper instead of using `groq.Groq()` directly everywhere:
 
 from __future__ import annotations
 
+import logging
+import time
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from groq import Groq
+from groq import Groq, RateLimitError
+
+logger = logging.getLogger(__name__)
 
 Role = Literal["system", "user", "assistant", "tool"]
+
+# Default retry-after when the API does not provide one in the 429 response (seconds).
+_DEFAULT_RETRY_AFTER = 10.0
+# Hard cap to avoid an unbounded back-off on misbehaving servers.
+_MAX_RETRY_AFTER = 60.0
 
 
 @dataclass(frozen=True)
@@ -66,16 +75,57 @@ class LLMResponse:
         return self.prompt_tokens + self.completion_tokens
 
 
+def _retry_after_from_error(exc: RateLimitError) -> float:
+    """Best-effort extraction of the server-suggested retry delay (seconds)."""
+    response = getattr(exc, "response", None)
+    if response is not None:
+        header = response.headers.get("retry-after") if response.headers else None
+        if header:
+            try:
+                return min(float(header), _MAX_RETRY_AFTER)
+            except ValueError:
+                pass
+    body = getattr(exc, "body", None) or {}
+    message = ""
+    if isinstance(body, dict):
+        message = (
+            str(body.get("error", {}).get("message", ""))
+            if isinstance(body.get("error"), dict)
+            else ""
+        )
+    if not message:
+        message = str(exc)
+    # Groq messages include "Please try again in 3.93s" — parse it.
+    import re
+
+    match = re.search(r"try again in ([\d.]+)s", message)
+    if match:
+        try:
+            return min(float(match.group(1)) + 0.5, _MAX_RETRY_AFTER)
+        except ValueError:
+            pass
+    return _DEFAULT_RETRY_AFTER
+
+
 class LLMClient:
     """Groq SDK wrapper. One instance per process is enough."""
 
-    def __init__(self, api_key: str, *, base_url: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        base_url: str | None = None,
+        max_retries_on_rate_limit: int = 4,
+    ) -> None:
         if not api_key:
             raise ValueError("LLMClient requires a non-empty api_key")
+        if max_retries_on_rate_limit < 0:
+            raise ValueError("max_retries_on_rate_limit must be >= 0")
         kwargs: dict[str, Any] = {"api_key": api_key}
         if base_url:
             kwargs["base_url"] = base_url
         self._groq = Groq(**kwargs)
+        self._max_retries = max_retries_on_rate_limit
 
     def chat(
         self,
@@ -106,7 +156,7 @@ class LLMClient:
         if tool_choice:
             request["tool_choice"] = tool_choice
 
-        resp = self._groq.chat.completions.create(**request)
+        resp = self._chat_with_retries(request)
         choice = resp.choices[0]
         msg = choice.message
 
@@ -131,3 +181,27 @@ class LLMClient:
             prompt_tokens=usage.prompt_tokens if usage else 0,
             completion_tokens=usage.completion_tokens if usage else 0,
         )
+
+    def _chat_with_retries(self, request: dict[str, Any]) -> Any:
+        """Call chat.completions.create with retry+backoff on Groq RateLimitError.
+
+        The Groq SDK has internal retries for 429 but they cap at a few seconds. On the
+        free tier we hit TPM ceilings that need longer waits; this respects the server's
+        own "try again in Xs" message.
+        """
+        attempts = 0
+        while True:
+            try:
+                return self._groq.chat.completions.create(**request)
+            except RateLimitError as exc:
+                attempts += 1
+                if attempts > self._max_retries:
+                    raise
+                delay = _retry_after_from_error(exc)
+                logger.warning(
+                    "groq rate limit (attempt %s/%s); sleeping %.1fs",
+                    attempts,
+                    self._max_retries,
+                    delay,
+                )
+                time.sleep(delay)

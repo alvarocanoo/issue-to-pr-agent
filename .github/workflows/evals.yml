@@ -49,7 +49,13 @@ jobs:
       - name: Install dependencies (locked)
         run: uv sync --frozen
 
-      - name: Run trivial eval set
+      - name: Pytest integration (LLMClient real Groq smoke)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: uv run pytest -q tests/integration
+        timeout-minutes: 5
+
+      - name: Run trivial eval set (10 issues end-to-end)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |

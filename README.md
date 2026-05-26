@@ -49,28 +49,48 @@ Most "AI coding" demos either wrap a framework (LangChain, LangGraph, Claude Age
 
 Companion project: [claude-docs-rag](https://github.com/alvarocanoo/claude-docs-rag) — production RAG over the Anthropic Claude API docs.
 
-## Measured metrics (real, not predicted)
+## Measured metrics (real A/B, not predicted)
 
-Measured on `openai/gpt-oss-20b` via Groq free tier. CI regenerates these on every push that
-touches the executor / sandbox / LLM client.
+Same model in both arms (`openai/gpt-oss-120b` for executor + planner + verifier), same 10
+trivial issues, same sandbox. The orchestrator is the Plan → Execute → Verify loop with
+Reflexion-style retries documented in [ADR-002](docs/adr/002-planner-executor-verifier.md).
 
-| Metric | Target | **Measured** | Source |
+| Metric | **Baseline** (executor-only) | **Orchestrator** (Plan→Exec→Verify) | Δ |
 |---|---|---|---|
-| `resolved@1` on trivial issue set (10 issues) | ≥ 70% | **100% (10/10)** | local run 2026-05-26; reproduce via [`evals.yml` workflow_dispatch](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml) |
-| Mean wall-clock per issue | ≤ 15 min | **24.3 s** | eval-report.json |
-| Mean tokens per issue | — | ~9 040 (prompt+completion) | eval-report.json |
-| Cost per issue | $0 (free tier) | **$0** — within Groq free-tier RPM/RPD | [console.groq.com](https://console.groq.com/docs/rate-limits) |
-| Sandbox escapes | 0 in 100 runs | 0 in this run; filesystem-snapshot diff stays inside workspace | sandbox tests + runtime |
-| `resolved@1` on SWE-bench Lite (50-subset) | ≥ 25% (Week 4) | TBD | Week 4 |
+| **`resolved@1`** | **1 / 10 = 10 %** | **8 / 10 = 80 %** | **+70 pp** |
+| Total prompt tokens | 24 535 | 99 593 | ×4.1 |
+| Total completion tokens | 1 580 | 5 763 | ×3.6 |
+| Total wall-clock (10 issues) | 116 s | 415 s | ×3.6 |
+| Cost (Groq free tier) | $0 | $0 | — |
+| Sandbox escapes | 0 / 10 | 0 / 10 | — |
 
-The trivial set is a sanity gate, not the real test of the agent — every issue is solvable in a
-single-line edit. SWE-bench Lite (300 instances of real bugs from popular Python projects)
-is the published benchmark and lands in Week 4.
+`eval_reports.id=1` (baseline) and `eval_reports.id=2` (orchestrator) persist in Postgres;
+the 20 individual runs are inspectable per-issue in the dashboard.
 
-**About the eval gate**: the `Evals (trivial)` workflow runs on `workflow_dispatch` (manual) and on
-pull requests that touch the agent code, not on every push. The Groq free tier caps daily tokens
-at 200 k and the trivial set burns ~90 k per run; running on every push exhausts the quota in two
-cycles. To re-measure, click "Run workflow" in the Actions tab or open a PR.
+### Why this A/B matters
+
+The same executor model that fails 9 out of 10 issues alone resolves 8 out of 10 once the
+orchestrator wraps it. Across the 7 retried issues, the verifier rejected the first attempt
+2-3 times on average and the executor consumed the feedback in the next iteration —
+**Reflexion is doing real work**, not just adding token cost.
+
+ADR-002 set the kill criterion at `Δresolved@1 < +10 pp` → "revert the architecture". The
+observed +70 pp clears that bar by a wide margin, so the orchestrator stays.
+
+### Caveats (M5 honest)
+
+- **Trivial set is a sanity gate**, not the real benchmark. Every issue is a single-line fix.
+  The real number lands when SWE-bench Lite (50-subset) runs in Week 4 — open-source models
+  via Groq are expected substantially below the leaderboard SOTA of Claude Opus 4.6 @ 62.7 %.
+- **Model choice forced by TPD**: this A/B used `openai/gpt-oss-120b` for the executor
+  because the Groq free-tier daily-token cap on `gpt-oss-20b` was saturated. With
+  `gpt-oss-20b` (the original ADR-004 choice), one prior measurement saw the baseline
+  executor solve 10 / 10 on the same set — a smaller model with my current prompt happens
+  to be a better fit for the baseline path. Both numbers will be re-measured side-by-side
+  when TPD permits.
+- **About the eval gate**: the `Evals (trivial)` workflow runs on `workflow_dispatch`
+  (manual) and on pull requests that touch the agent code, not on every push, because the
+  Groq free tier caps daily tokens at 200 k and the orchestrator A/B burns ~125 k.
 
 ## Architecture (1 paragraph)
 

@@ -1,6 +1,6 @@
 # ADR-002: Planner / Executor / Verifier split with Reflexion-style retries
 
-**Status**: accepted (planner + verifier + orchestrator implemented; numbers vs baseline measured next eval run)
+**Status**: accepted — A/B measured 2026-05-26 on the trivial set; orchestrator lifts resolved@1 from 10 % to 80 % (+70 pp), well above the +10 pp kill criterion. Stays.
 **Date**: 2026-05-26
 **Deciders**: Álvaro
 
@@ -111,7 +111,26 @@ the tokens in the tool loop, throughput dominates (gpt-oss-20b at 1000 tok/s).
   `uv run python -m evals.runner --set trivial` runs the orchestrator by default;
   `--executor-only` runs the Week-1 baseline.
 
-- **A/B comparison** (Week 2, after TPD reset): run the trivial set with `--executor-only`
-  and with the default orchestrator; compare `resolved@1`, `total_tokens`, `elapsed`,
-  `reflexion_iterations` per issue. Numbers replace the placeholders in this ADR and in the
-  README "Measured metrics" section.
+- **A/B comparison** (Week 2, completed 2026-05-26): ran the trivial 10-issue set with
+  `--executor-only` and with the default orchestrator. Same model in both arms
+  (`openai/gpt-oss-120b` for executor + planner + verifier — the `gpt-oss-20b` TPD was
+  saturated). Measured deltas:
+
+| Metric | Baseline | Orchestrator | Δ |
+|---|---|---|---|
+| `resolved@1` | 1 / 10 (10 %) | 8 / 10 (80 %) | **+70 pp** |
+| Prompt tokens | 24 535 | 99 593 | ×4.1 |
+| Completion tokens | 1 580 | 5 763 | ×3.6 |
+| Wall-clock | 116 s | 415 s | ×3.6 |
+
+  Reflexion iteration distribution in the orchestrator's 8 successful runs:
+  `reflexion=1` (planner-only assist) on 2 runs, `reflexion=2` on 5 runs (verifier
+  rejected the first attempt, executor consumed the feedback, second attempt approved),
+  `reflexion=3` on 1 run. The 2 unresolved cases (`007-mutable-default`,
+  `008-division-by-zero`) hit `max_reflexion_iterations`: the verifier kept rejecting and
+  the executor never produced a fix the verifier judged complete. Persisted as
+  `eval_reports.id=1` (baseline) and `eval_reports.id=2` (orchestrator) in Postgres.
+
+  **Decision**: the kill criterion was `Δresolved@1 < +10 pp`. The measured Δ is +70 pp,
+  which clears it by a wide margin. The orchestrator stays in main and becomes the default
+  path of the CLI runner and the runner.

@@ -1,0 +1,131 @@
+{
+  "set_dir": "evals\\trivial_issues",
+  "total": 10,
+  "solved": 8,
+  "resolved_at_1": 0.8,
+  "total_prompt_tokens": 99593,
+  "total_completion_tokens": 5763,
+  "total_elapsed_seconds": 415.48,
+  "results": [
+    {
+      "id": "001-typo",
+      "success": true,
+      "iterations": 7,
+      "exit_reason": "approved",
+      "prompt_tokens": 7440,
+      "completion_tokens": 352,
+      "elapsed_seconds": 6.84,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 2,
+      "verifier_approved": true
+    },
+    {
+      "id": "002-off-by-one",
+      "success": true,
+      "iterations": 8,
+      "exit_reason": "approved",
+      "prompt_tokens": 20770,
+      "completion_tokens": 1146,
+      "elapsed_seconds": 65.92,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 3,
+      "verifier_approved": true
+    },
+    {
+      "id": "003-missing-import",
+      "success": true,
+      "iterations": 15,
+      "exit_reason": "approved",
+      "prompt_tokens": 11424,
+      "completion_tokens": 742,
+      "elapsed_seconds": 55.33,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 1,
+      "verifier_approved": true
+    },
+    {
+      "id": "004-wrong-return-type",
+      "success": true,
+      "iterations": 12,
+      "exit_reason": "approved",
+      "prompt_tokens": 11883,
+      "completion_tokens": 837,
+      "elapsed_seconds": 50.61,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 2,
+      "verifier_approved": true
+    },
+    {
+      "id": "005-none-comparison",
+      "success": true,
+      "iterations": 11,
+      "exit_reason": "approved",
+      "prompt_tokens": 8408,
+      "completion_tokens": 557,
+      "elapsed_seconds": 31.78,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 1,
+      "verifier_approved": true
+    },
+    {
+      "id": "006-typo-attribute",
+      "success": true,
+      "iterations": 9,
+      "exit_reason": "approved",
+      "prompt_tokens": 9385,
+      "completion_tokens": 571,
+      "elapsed_seconds": 50.48,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 2,
+      "verifier_approved": true
+    },
+    {
+      "id": "007-mutable-default",
+      "success": false,
+      "iterations": 2,
+      "exit_reason": "max_reflexion_iterations",
+      "prompt_tokens": 5715,
+      "completion_tokens": 266,
+      "elapsed_seconds": 32.02,
+      "verify_exit_code": 1,
+      "reflexion_iterations": 3,
+      "verifier_approved": false
+    },
+    {
+      "id": "008-division-by-zero",
+      "success": false,
+      "iterations": 2,
+      "exit_reason": "max_reflexion_iterations",
+      "prompt_tokens": 4941,
+      "completion_tokens": 217,
+      "elapsed_seconds": 21.38,
+      "verify_exit_code": 1,
+      "reflexion_iterations": 3,
+      "verifier_approved": false
+    },
+    {
+      "id": "009-fstring-bug",
+      "success": true,
+      "iterations": 10,
+      "exit_reason": "approved",
+      "prompt_tokens": 10014,
+      "completion_tokens": 511,
+      "elapsed_seconds": 53.46,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 2,
+      "verifier_approved": true
+    },
+    {
+      "id": "010-recursion-base-case",
+      "success": true,
+      "iterations": 9,
+      "exit_reason": "approved",
+      "prompt_tokens": 9613,
+      "completion_tokens": 564,
+      "elapsed_seconds": 46.41,
+      "verify_exit_code": 0,
+      "reflexion_iterations": 2,
+      "verifier_approved": true
+    }
+  ]
+}

@@ -21,8 +21,11 @@ from typing import Any
 from issue_to_pr.executor import Executor, Task
 from issue_to_pr.issues import load_issue, materialise
 from issue_to_pr.llm import LLMClient
+from issue_to_pr.orchestrator import Orchestrator
+from issue_to_pr.planner import Planner
 from issue_to_pr.sandbox import LocalSubprocessRunner
 from issue_to_pr.settings import Settings, get_settings
+from issue_to_pr.verifier import Verifier
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -39,6 +42,8 @@ class IssueResult:
     completion_tokens: int
     elapsed_seconds: float
     verify_exit_code: int
+    reflexion_iterations: int = 1  # 1 with --executor-only; >=1 with orchestrator
+    verifier_approved: bool | None = None  # None when running executor-only
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -50,11 +55,13 @@ class IssueResult:
             "completion_tokens": self.completion_tokens,
             "elapsed_seconds": self.elapsed_seconds,
             "verify_exit_code": self.verify_exit_code,
+            "reflexion_iterations": self.reflexion_iterations,
+            "verifier_approved": self.verifier_approved,
         }
 
 
-def _run_one(yaml_path: Path, executor: Executor) -> IssueResult:
-    """Resolve one issue end-to-end. Workspace is cleaned up after the run."""
+def _run_one_executor(yaml_path: Path, executor: Executor) -> IssueResult:
+    """Resolve one issue with the Executor only (baseline). Cleans workspace."""
     spec = load_issue(yaml_path)
     workspace = Path(tempfile.mkdtemp(prefix=f"itp-eval-{spec.id}-"))
     try:
@@ -80,36 +87,98 @@ def _run_one(yaml_path: Path, executor: Executor) -> IssueResult:
         shutil.rmtree(workspace, ignore_errors=True)
 
 
-def _build_executor(settings: Settings) -> Executor:
+def _run_one_orchestrator(yaml_path: Path, orchestrator: Orchestrator) -> IssueResult:
+    """Resolve one issue with the full Planner -> Executor -> Verifier loop."""
+    spec = load_issue(yaml_path)
+    workspace = Path(tempfile.mkdtemp(prefix=f"itp-eval-{spec.id}-"))
+    try:
+        materialise(spec, workspace)
+        task = Task(
+            id=spec.id,
+            description=spec.description,
+            workspace=workspace,
+            verify_command=spec.verify_command,
+        )
+        outcome = orchestrator.run(task)
+        final = outcome.final_execution
+        return IssueResult(
+            id=spec.id,
+            success=outcome.success,
+            iterations=final.iterations,
+            exit_reason=outcome.exit_reason,
+            prompt_tokens=outcome.total_prompt_tokens,
+            completion_tokens=outcome.total_completion_tokens,
+            elapsed_seconds=round(outcome.elapsed_seconds, 2),
+            verify_exit_code=final.verify_exit_code,
+            reflexion_iterations=outcome.reflexion_iterations,
+            verifier_approved=outcome.final_verdict.approved,
+        )
+    finally:
+        shutil.rmtree(workspace, ignore_errors=True)
+
+
+def _build_executor(settings: Settings, llm: LLMClient) -> Executor:
     return Executor(
-        llm=LLMClient(api_key=settings.groq_api_key),
+        llm=llm,
         sandbox=LocalSubprocessRunner(timeout_seconds=60),
         model=settings.executor_model,
     )
 
 
-def run_eval_set(set_dir: Path, *, executor: Executor | None = None) -> dict[str, Any]:
-    """Run every `*.yaml` in `set_dir` and return an aggregated report dict."""
+def _build_orchestrator(settings: Settings, llm: LLMClient) -> Orchestrator:
+    return Orchestrator(
+        planner=Planner(llm=llm, model=settings.planner_model),
+        executor=_build_executor(settings, llm),
+        verifier=Verifier(llm=llm, model=settings.verifier_model),
+        max_reflexion_iterations=3,
+    )
+
+
+def run_eval_set(
+    set_dir: Path,
+    *,
+    executor: Executor | None = None,
+    orchestrator: Orchestrator | None = None,
+    use_orchestrator: bool = True,
+) -> dict[str, Any]:
+    """Run every `*.yaml` in `set_dir` and return an aggregated report dict.
+
+    Inject `orchestrator` (preferred) or `executor` for tests; otherwise build from settings.
+    `use_orchestrator=False` falls back to the executor-only path (baseline measurement).
+    """
     yaml_files = sorted(set_dir.glob("*.yaml"))
     if not yaml_files:
         raise RuntimeError(f"no YAML files in {set_dir}")
 
-    if executor is None:
+    if executor is None and orchestrator is None:
         settings = get_settings()
         if not settings.groq_api_key:
             raise RuntimeError("GROQ_API_KEY not set in environment or .env")
-        executor = _build_executor(settings)
+        llm = LLMClient(api_key=settings.groq_api_key)
+        if use_orchestrator:
+            orchestrator = _build_orchestrator(settings, llm)
+        else:
+            executor = _build_executor(settings, llm)
 
     started = time.perf_counter()
     results: list[IssueResult] = []
     for yaml_path in yaml_files:
         print(f"[eval] running {yaml_path.name} ...", flush=True)
-        result = _run_one(yaml_path, executor)
+        if orchestrator is not None:
+            result = _run_one_orchestrator(yaml_path, orchestrator)
+        else:
+            assert executor is not None
+            result = _run_one_executor(yaml_path, executor)
         status = "PASS" if result.success else "FAIL"
+        suffix = (
+            f" reflexion={result.reflexion_iterations} approved={result.verifier_approved}"
+            if orchestrator is not None
+            else ""
+        )
         print(
             f"[eval]   {status} id={result.id} iter={result.iterations} "
             f"tokens={result.prompt_tokens + result.completion_tokens} "
-            f"elapsed={result.elapsed_seconds}s",
+            f"elapsed={result.elapsed_seconds}s{suffix}",
             flush=True,
         )
         results.append(result)
@@ -143,6 +212,11 @@ def main(argv: list[str] | None = None) -> int:
         default=0.70,
         help="Minimum resolved@1 to exit 0; otherwise exit 1.",
     )
+    parser.add_argument(
+        "--executor-only",
+        action="store_true",
+        help="Baseline: skip Planner+Verifier, run the Executor directly.",
+    )
     args = parser.parse_args(argv)
 
     if args.set == "trivial":
@@ -150,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         raise SystemExit(f"unknown set: {args.set}")
 
-    report = run_eval_set(set_dir)
+    report = run_eval_set(set_dir, use_orchestrator=not args.executor_only)
     serialised = json.dumps(report, indent=2)
     print(serialised)
     if args.out:

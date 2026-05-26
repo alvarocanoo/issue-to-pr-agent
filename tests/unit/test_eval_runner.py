@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from evals import check_regression
-from evals.runner import IssueResult, _run_one, run_eval_set
+from evals.runner import IssueResult, _run_one_executor, run_eval_set
 from issue_to_pr.executor.types import ExecutionResult
 
 
@@ -64,6 +64,8 @@ def test_issue_result_to_dict_shape() -> None:
         "completion_tokens": 20,
         "elapsed_seconds": 1.2,
         "verify_exit_code": 0,
+        "reflexion_iterations": 1,
+        "verifier_approved": None,
     }
 
 
@@ -71,7 +73,7 @@ def test_run_one_passes_through_executor(trivial_yaml: Path) -> None:
     yaml_path = trivial_yaml / "001-noop.yaml"
     executor = MagicMock()
     executor.run.return_value = _fake_execution(success=True, tokens=42, iters=7)
-    result = _run_one(yaml_path, executor)
+    result = _run_one_executor(yaml_path, executor)
     assert result.id == "001-noop"
     assert result.success is True
     assert result.prompt_tokens == 42

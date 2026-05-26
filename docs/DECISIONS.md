@@ -8,7 +8,7 @@ rationale is real and not aspirational.
 |---|---|---|---|
 | 000 | [Template](adr/000-template.md) | — | — |
 | 001 | [Hand-rolled tool loop over an agent framework](adr/001-hand-rolled-tool-loop.md) | accepted | Week 1: `executor/` + `llm/client.py` |
-| 002 | Planner / Executor / Verifier split (ReAct + Reflexion + LLM-as-judge) | planned | Week 2 |
+| 002 | [Planner / Executor / Verifier split (ReAct + Reflexion + LLM-as-judge)](adr/002-planner-executor-verifier.md) | accepted (impl; A/B numbers Week 2) | Week 2: `planner/`, `verifier/`, `orchestrator.py` |
 | 003 | [Pluggable sandbox (Local default, Container opt-in)](adr/003-pluggable-sandbox.md) | accepted (Local impl.; Container planned) | Week 1: `sandbox/` |
 | 004 | [Multi-model routing on Groq Cloud](adr/004-multi-model-routing.md) | accepted (executor live; planner/verifier wire-up Week 2) | Week 1: `settings.py` |
 | 005 | Langfuse self-hosted over Helicone / Phoenix / OpenTelemetry-only | planned | Week 3 |

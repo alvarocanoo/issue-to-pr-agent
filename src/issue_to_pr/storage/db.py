@@ -42,6 +42,7 @@ class StoredRun:
     plan: dict[str, Any]
     verdict: dict[str, Any]
     history: list[dict[str, Any]]
+    langfuse_trace_url: str | None = None
 
 
 class Storage:
@@ -84,6 +85,7 @@ class Storage:
         plan: dict[str, Any] | None = None,
         verdict: dict[str, Any] | None = None,
         history: list[Any] | None = None,
+        langfuse_trace_url: str | None = None,
     ) -> int:
         """Insert one run row. Returns the new id."""
         if mode not in ("executor", "orchestrator"):
@@ -92,12 +94,14 @@ class Storage:
             INSERT INTO runs (
                 task_id, mode, success, reflexion_iterations, executor_iterations,
                 verify_exit_code, prompt_tokens, completion_tokens, estimated_cost_usd,
-                elapsed_seconds, plan, verdict, history, finished_at
+                langfuse_trace_url, elapsed_seconds,
+                plan, verdict, history, finished_at
             )
             VALUES (
                 %(task_id)s, %(mode)s, %(success)s, %(reflexion_iterations)s,
                 %(executor_iterations)s, %(verify_exit_code)s, %(prompt_tokens)s,
-                %(completion_tokens)s, %(estimated_cost_usd)s, %(elapsed_seconds)s,
+                %(completion_tokens)s, %(estimated_cost_usd)s,
+                %(langfuse_trace_url)s, %(elapsed_seconds)s,
                 %(plan)s::jsonb, %(verdict)s::jsonb, %(history)s::jsonb, NOW()
             )
             RETURNING id
@@ -112,6 +116,7 @@ class Storage:
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
             "estimated_cost_usd": estimated_cost_usd,
+            "langfuse_trace_url": langfuse_trace_url,
             "elapsed_seconds": elapsed_seconds,
             "plan": json.dumps(plan or {}),
             "verdict": json.dumps(verdict or {}),
@@ -167,7 +172,7 @@ class Storage:
         sql = """
             SELECT id, task_id, mode, success, reflexion_iterations, executor_iterations,
                    verify_exit_code, prompt_tokens, completion_tokens, estimated_cost_usd,
-                   elapsed_seconds,
+                   langfuse_trace_url, elapsed_seconds,
                    started_at::text AS started_at,
                    finished_at::text AS finished_at,
                    plan, verdict, history
@@ -184,7 +189,7 @@ class Storage:
         sql = """
             SELECT id, task_id, mode, success, reflexion_iterations, executor_iterations,
                    verify_exit_code, prompt_tokens, completion_tokens, estimated_cost_usd,
-                   elapsed_seconds,
+                   langfuse_trace_url, elapsed_seconds,
                    started_at::text AS started_at,
                    finished_at::text AS finished_at,
                    plan, verdict, history
@@ -215,4 +220,5 @@ class Storage:
             plan=row["plan"] or {},
             verdict=row["verdict"] or {},
             history=row.get("history") or [],
+            langfuse_trace_url=row.get("langfuse_trace_url"),
         )

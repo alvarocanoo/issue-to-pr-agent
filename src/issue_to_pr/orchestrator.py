@@ -31,6 +31,7 @@ from dataclasses import dataclass, field, replace
 
 from issue_to_pr.executor import Executor
 from issue_to_pr.executor.types import ExecutionResult, Task
+from issue_to_pr.observability import get_tracer
 from issue_to_pr.planner import Plan, Planner
 from issue_to_pr.verifier import Verifier, VerifierVerdict
 
@@ -50,6 +51,7 @@ class OrchestratorResult:
     final_verdict: VerifierVerdict
     history: tuple[tuple[ExecutionResult, VerifierVerdict], ...] = field(default_factory=tuple)
     elapsed_seconds: float = 0.0
+    langfuse_trace_url: str | None = None  # populated when Langfuse keys are configured
 
     @property
     def total_prompt_tokens(self) -> int:
@@ -79,34 +81,56 @@ class Orchestrator:
         self._max_iter = max_reflexion_iterations
 
     def run(self, task: Task) -> OrchestratorResult:
+        tracer = get_tracer()
         start = time.perf_counter()
-        plan = self._planner.plan(task)
-        plan_brief = plan.to_executor_brief()
+        trace_url: str | None = None
 
-        history: list[tuple[ExecutionResult, VerifierVerdict]] = []
-        feedback_brief = ""
+        with tracer.span(name=f"orchestrator/{task.id}") as root_span:
+            if hasattr(root_span, "update"):
+                root_span.update(
+                    input={"task_id": task.id, "description": task.description},
+                    metadata={
+                        "verify_command": task.verify_command,
+                        "max_iterations": task.max_iterations,
+                    },
+                )
 
-        execution: ExecutionResult | None = None
-        verdict: VerifierVerdict | None = None
-        exit_reason = "max_reflexion_iterations"
+            with tracer.span(name="plan"):
+                plan = self._planner.plan(task)
+            plan_brief = plan.to_executor_brief()
 
-        for iteration in range(1, self._max_iter + 1):
-            augmented_description = self._build_description(task, plan_brief, feedback_brief)
-            iter_task = replace(task, description=augmented_description)
-            execution = self._executor.run(iter_task)
-            verdict = self._verifier.judge(task, execution)
-            history.append((execution, verdict))
-            logger.info(
-                "orchestrator iter=%s verify_exit=%s approved=%s",
-                iteration,
-                execution.verify_exit_code,
-                verdict.approved,
-            )
-            if verdict.approved:
-                exit_reason = "approved"
-                break
-            feedback_brief = verdict.to_executor_feedback()
+            history: list[tuple[ExecutionResult, VerifierVerdict]] = []
+            feedback_brief = ""
 
+            execution: ExecutionResult | None = None
+            verdict: VerifierVerdict | None = None
+            exit_reason = "max_reflexion_iterations"
+
+            for iteration in range(1, self._max_iter + 1):
+                with tracer.span(name=f"reflexion-iteration-{iteration}"):
+                    augmented_description = self._build_description(
+                        task, plan_brief, feedback_brief
+                    )
+                    iter_task = replace(task, description=augmented_description)
+                    with tracer.span(name="executor"):
+                        execution = self._executor.run(iter_task)
+                    with tracer.span(name="verifier"):
+                        verdict = self._verifier.judge(task, execution)
+                    history.append((execution, verdict))
+                    logger.info(
+                        "orchestrator iter=%s verify_exit=%s approved=%s",
+                        iteration,
+                        execution.verify_exit_code,
+                        verdict.approved,
+                    )
+                if verdict.approved:
+                    exit_reason = "approved"
+                    break
+                feedback_brief = verdict.to_executor_feedback()
+
+            trace_url = tracer.trace_url()
+
+        tracer.flush()
         assert execution is not None and verdict is not None  # loop ran at least once
         elapsed = time.perf_counter() - start
 
@@ -120,6 +144,7 @@ class Orchestrator:
             final_verdict=verdict,
             history=tuple(history),
             elapsed_seconds=elapsed,
+            langfuse_trace_url=trace_url,
         )
 
     @staticmethod

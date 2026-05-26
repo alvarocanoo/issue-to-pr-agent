@@ -41,11 +41,23 @@ export default async function RunPage({ params }: { params: Promise<Params> }) {
               ← all runs
             </Link>
           </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-            <span className="text-zinc-500">run #</span>
-            {run.id} <span className="text-zinc-500">·</span>{" "}
-            <span className="font-mono">{run.task_id}</span>
-          </h1>
+          <div className="mt-2 flex flex-wrap items-baseline justify-between gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              <span className="text-zinc-500">run #</span>
+              {run.id} <span className="text-zinc-500">·</span>{" "}
+              <span className="font-mono">{run.task_id}</span>
+            </h1>
+            {run.langfuse_trace_url ? (
+              <a
+                href={run.langfuse_trace_url}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md border border-emerald-700/60 bg-emerald-900/30 px-3 py-1 text-xs font-medium text-emerald-200 hover:bg-emerald-900/50"
+              >
+                Open trace in Langfuse →
+              </a>
+            ) : null}
+          </div>
           <p className="mt-1 text-sm text-zinc-400">
             {run.mode} · {run.success ? "✓ resolved" : "✗ failed"} · verify exit{" "}
             <span className="font-mono">{run.verify_exit_code}</span>

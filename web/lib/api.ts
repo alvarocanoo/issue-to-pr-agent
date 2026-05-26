@@ -48,6 +48,7 @@ export type StoredRun = {
   plan: Record<string, unknown>;
   verdict: Record<string, unknown>;
   history: HistoryEntry[];
+  langfuse_trace_url?: string | null;
 };
 
 export type Stats = {

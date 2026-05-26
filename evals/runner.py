@@ -182,6 +182,7 @@ def _run_one_orchestrator(
                     plan=asdict(outcome.plan),
                     verdict=asdict(outcome.final_verdict),
                     history=_serialise_history(outcome.history),
+                    langfuse_trace_url=outcome.langfuse_trace_url,
                 )
             except Exception as exc:  # noqa: BLE001  # persistence failure must not lose the result
                 print(f"[eval]   WARNING: could not persist run {spec.id}: {exc}", flush=True)

@@ -11,7 +11,7 @@ rationale is real and not aspirational.
 | 002 | [Planner / Executor / Verifier split (ReAct + Reflexion + LLM-as-judge)](adr/002-planner-executor-verifier.md) | accepted (impl; A/B numbers Week 2) | Week 2: `planner/`, `verifier/`, `orchestrator.py` |
 | 003 | [Pluggable sandbox (Local default, Container opt-in)](adr/003-pluggable-sandbox.md) | accepted (Local impl.; Container planned) | Week 1: `sandbox/` |
 | 004 | [Multi-model routing on Groq Cloud](adr/004-multi-model-routing.md) | accepted (executor live; planner/verifier wire-up Week 2) | Week 1: `settings.py` |
-| 005 | [Langfuse Cloud for per-tool-call traces](adr/005-langfuse-self-hosted.md) | planned (wiring Week 3.3) | Week 3.3 |
+| 005 | [Langfuse Cloud for per-tool-call traces](adr/005-langfuse-self-hosted.md) | accepted | Week 3.3: `observability/`, `LLMClient`, `Orchestrator` |
 | 006 | [Postgres + JSONB over SQLite or a document DB](adr/006-postgres-jsonb.md) | accepted | Week 3.1: `storage/`, `api/` |
 | 007 | [SWE-bench Lite over Verified / full SWE-bench](adr/007-swe-bench-lite.md) | planned (50-subset Week 4) | Week 4 |
 | 008 | [No fine-tuning — prompt + routing is the contract](adr/008-no-fine-tuning.md) | accepted | always (negative decision) |

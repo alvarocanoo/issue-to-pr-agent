@@ -22,6 +22,7 @@ from typing import Any, Literal
 from groq import Groq, RateLimitError
 
 from issue_to_pr.llm.pricing import estimate_cost_usd
+from issue_to_pr.observability import get_tracer
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,7 @@ class LLMClient:
             kwargs["base_url"] = base_url
         self._groq = Groq(**kwargs)
         self._max_retries = max_retries_on_rate_limit
+        self._tracer = get_tracer()
 
     def chat(
         self,
@@ -159,9 +161,21 @@ class LLMClient:
         if tool_choice:
             request["tool_choice"] = tool_choice
 
-        resp = self._chat_with_retries(request)
-        choice = resp.choices[0]
-        msg = choice.message
+        with self._tracer.generation(name="chat", model=model) as observation:
+            resp = self._chat_with_retries(request)
+            choice = resp.choices[0]
+            msg = choice.message
+            # When tracing is enabled, attach the input/output/usage to the span.
+            if hasattr(observation, "update"):
+                observation.update(
+                    input=[m.to_groq() for m in messages],
+                    output=msg.content,
+                    usage_details={
+                        "input": resp.usage.prompt_tokens if resp.usage else 0,
+                        "output": resp.usage.completion_tokens if resp.usage else 0,
+                    },
+                    metadata={"finish_reason": choice.finish_reason},
+                )
 
         tool_calls: list[LLMToolCall] = []
         raw_tool_calls = getattr(msg, "tool_calls", None) or []

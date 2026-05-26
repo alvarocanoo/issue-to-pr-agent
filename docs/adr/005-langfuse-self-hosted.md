@@ -1,8 +1,6 @@
 # ADR-005: Per-tool-call traces via Langfuse (planned)
 
-**Status**: planned — wiring lands in Week 3.3, after the Postgres/dashboard layer
-([ADR-006](006-postgres-jsonb.md), [ADR-010](010-run-persistence-and-observability.md))
-is stable.
+**Status**: accepted — wired via context-manager spans in `LLMClient` and `Orchestrator`, gated by `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY`. Silent no-op when keys are missing, so CI and the public Pages deploy run unchanged.
 **Date**: 2026-05-26
 **Deciders**: Álvaro
 
@@ -70,43 +68,51 @@ Reasons:
   duplicated in our Postgres `runs.history` JSON (summarised), and the SDK can export
   to OTel if we ever switch. Not a permanent dependency.
 
-## Implementation sketch
+## Implementation (shipped 2026-05-26)
+
+Langfuse SDK v4 changed its public surface: decorators are deprecated in favour of context
+managers. The wiring uses `Langfuse.start_as_current_observation(as_type=..., name=...)`
+inside small `LangfuseTracer.span()` / `LangfuseTracer.generation()` helpers
+(`src/issue_to_pr/observability/tracing.py`) that fall back to a `_NoopSpan` when the
+keys are not set. Every LLM call in `LLMClient.chat()` opens a `generation` span; the
+orchestrator wraps each run in a root span with nested `plan`, `reflexion-iteration-N`,
+`executor` and `verifier` spans.
 
 ```python
-# src/issue_to_pr/llm/client.py (sketch)
-from langfuse.decorators import langfuse_context, observe
+# src/issue_to_pr/llm/client.py (shipped)
+with self._tracer.generation(name="chat", model=model) as observation:
+    resp = self._chat_with_retries(request)
+    ...
+    observation.update(input=..., output=..., usage_details={...}, metadata={...})
 
-class LLMClient:
-    @observe(as_type="generation")
-    def chat(self, *, model, messages, tools, max_tokens, temperature, ...):
-        # existing body
-        langfuse_context.update_current_observation(
-            model=model,
-            usage={"input": prompt_tokens, "output": completion_tokens},
-            metadata={"finish_reason": resp.finish_reason},
-        )
-        return ...
-
-# src/issue_to_pr/orchestrator.py (sketch)
-@observe()
-def run(self, task: Task) -> OrchestratorResult:
-    langfuse_context.update_current_trace(name=f"orchestrator/{task.id}", session_id=task.id)
-    # ...
-    langfuse_context.flush()
+# src/issue_to_pr/orchestrator.py (shipped)
+with tracer.span(name=f"orchestrator/{task.id}") as root_span:
+    root_span.update(input=..., metadata=...)
+    with tracer.span(name="plan"):
+        plan = self._planner.plan(task)
+    for iteration in range(1, self._max_iter + 1):
+        with tracer.span(name=f"reflexion-iteration-{iteration}"):
+            with tracer.span(name="executor"):
+                execution = self._executor.run(iter_task)
+            with tracer.span(name="verifier"):
+                verdict = self._verifier.judge(task, execution)
+    trace_url = tracer.trace_url()
+tracer.flush()
 ```
 
-The dashboard adds a `langfuse_trace_url` field on `runs` (nullable), populated by the
-orchestrator from `langfuse_context.get_current_trace_url()`. The detail page renders it
-as a button: "Open trace in Langfuse →".
+`OrchestratorResult.langfuse_trace_url` carries the URL up to the runner, which persists
+it in `runs.langfuse_trace_url` (nullable TEXT column). The Next.js detail page renders
+"Open trace in Langfuse →" as a button when the URL is present.
 
 ## Verification
 
-When ADR-005 lands as `accepted`:
-- Smoke: one orchestrator run produces a visible trace in the Langfuse Cloud UI at the
-  expected `trace_url`.
-- Failure mode: `LANGFUSE_PUBLIC_KEY=""` (no creds) → agent runs unchanged, no traces,
-  no exceptions, no warnings beyond a single `logger.info("Langfuse disabled")`.
-- Dashboard regression: detail page shows the deep-link button when `langfuse_trace_url`
-  is set on the run, hides it when null.
+- Unit tests (`tests/unit/test_observability.py`, 5 tests): tracer no-op when keys are
+  missing, span contexts swallow attribute updates, `trace_url()` is `None` when disabled.
+  Run on every CI push.
+- Disabled path (default in CI + public Pages deploy): `is_enabled()` is False ⇒ tracer
+  returns `_NoopSpan` ⇒ agent runs unchanged ⇒ no network calls to Langfuse.
+- Enabled path (developer adds keys to `.env`): a single orchestrator run produces a
+  hierarchical trace in Langfuse Cloud with the spans listed above; the URL is persisted
+  to `runs.langfuse_trace_url`; the dashboard detail page renders the deep-link button.
 
-Until then this ADR is `planned`; no Langfuse code is in the tree.
+See the README "Enable Langfuse traces" subsection for the exact setup steps.

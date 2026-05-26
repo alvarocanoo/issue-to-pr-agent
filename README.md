@@ -131,6 +131,23 @@ Once Week 1 is done, the entrypoint will be:
 uv run issue-to-pr run --issue evals/trivial_issues/001-typo.yaml
 ```
 
+## Enable Langfuse traces (optional)
+
+Per-tool-call traces become visible in [Langfuse Cloud](https://cloud.langfuse.com/) when
+two env vars are present; without them the agent runs unchanged. Set them in `.env`:
+
+```ini
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=https://cloud.langfuse.com  # optional, this is the default
+```
+
+Run the agent (orchestrator mode), then open the detail page of any run on the dashboard —
+the **"Open trace in Langfuse →"** button appears when `langfuse_trace_url` is set. The
+trace nests `plan` / `reflexion-iteration-N` / `executor` / `verifier` spans, with input,
+output, model and token usage on every `chat` generation. See
+[ADR-005](docs/adr/005-langfuse-self-hosted.md).
+
 ## Roadmap
 
 - [x] Week 1.1: walking skeleton + CI green (uv project, settings, CLI, GitHub Actions)
@@ -142,7 +159,7 @@ uv run issue-to-pr run --issue evals/trivial_issues/001-typo.yaml
 - [x] Week 2.1: Planner + Verifier + Orchestrator (Reflexion loop). ADR-002 written; A/B vs baseline next eval run.
 - [x] Week 3.1: Postgres persistence (`storage/`) + read-only FastAPI surface (`api/`) — ADR-006.
 - [x] Week 3.2: Next.js 16 dashboard (`web/`) — stats, run list, per-run plan + verdict timeline.
-- [ ] Week 3.3: Langfuse traces (real-time per-tool-call observability).
+- [x] Week 3.3: Langfuse traces wired (per-tool-call observability, gated by env vars; ADR-005).
 - [ ] Week 4: SWE-bench Lite subset eval + sandbox hardening (Podman runner) + deploy.
 - [ ] Weeks 5-6: ablation studies + blog posts + README final with measured numbers.
 

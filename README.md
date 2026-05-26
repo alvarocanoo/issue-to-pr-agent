@@ -94,9 +94,10 @@ uv run issue-to-pr run --issue evals/trivial_issues/001-typo.yaml
 - [x] Week 1.5: 10-issue trivial eval suite + runner + CI regression gate (`workflow_dispatch` + PR-only)
 - [x] Week 1.6: ADRs 001/003/004/007/008/009 (architecture decisions defendible in interview)
 - [x] Week 2.1: Planner + Verifier + Orchestrator (Reflexion loop). ADR-002 written; A/B vs baseline next eval run.
-- [ ] Week 3: Langfuse traces + Postgres persistence + FastAPI + Next.js dashboard
-- [ ] Week 4: SWE-bench Lite subset eval + sandbox hardening (Podman runner) + deploy
-- [ ] Weeks 5-6: ablation studies + blog posts + README final with measured numbers
+- [x] Week 3.1: Postgres persistence (`storage/`) + read-only FastAPI surface (`api/`) — ADR-006.
+- [ ] Week 3.2: Langfuse traces + Next.js dashboard reading from `/runs`.
+- [ ] Week 4: SWE-bench Lite subset eval + sandbox hardening (Podman runner) + deploy.
+- [ ] Weeks 5-6: ablation studies + blog posts + README final with measured numbers.
 
 ## License
 

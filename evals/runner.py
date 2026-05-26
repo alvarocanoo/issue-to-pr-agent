@@ -25,6 +25,7 @@ from issue_to_pr.orchestrator import Orchestrator
 from issue_to_pr.planner import Planner
 from issue_to_pr.sandbox import LocalSubprocessRunner
 from issue_to_pr.settings import Settings, get_settings
+from issue_to_pr.storage import Storage
 from issue_to_pr.verifier import Verifier
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -217,6 +218,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Baseline: skip Planner+Verifier, run the Executor directly.",
     )
+    parser.add_argument(
+        "--persist",
+        action="store_true",
+        help="Persist the aggregate report to Postgres (uses DATABASE_URL).",
+    )
     args = parser.parse_args(argv)
 
     if args.set == "trivial":
@@ -230,6 +236,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.out:
         args.out.write_text(serialised, encoding="utf-8")
         print(f"[eval] report written to {args.out}", flush=True)
+
+    if args.persist:
+        settings = get_settings()
+        storage = Storage(settings.database_url)
+        storage.init_schema()
+        report_id = storage.insert_eval_report(
+            set_name=args.set,
+            mode="executor" if args.executor_only else "orchestrator",
+            report=report,
+        )
+        print(f"[eval] persisted as eval_reports.id={report_id}", flush=True)
 
     return 0 if report["resolved_at_1"] >= args.threshold else 1
 

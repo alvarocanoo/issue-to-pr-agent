@@ -3,16 +3,17 @@
   Idempotent setup for issue-to-pr-agent on Windows 11 + PowerShell 5.1.
 
 .DESCRIPTION
-  - Verifies prerequisites (git, gh, uv, Docker).
+  - Verifies prerequisites (git, gh, uv).
   - Ensures global git identity is set.
+  - Ensures .env exists (copies from .env.example if missing) and warns if GROQ_API_KEY is the placeholder.
   - Runs `uv sync` to install dependencies.
-  - Starts the Postgres container.
+  - Runs the test suite.
   - Reports next steps.
 
   Safe to run repeatedly: every check is idempotent.
 
 .EXAMPLE
-  pwsh -File scripts\bootstrap.ps1
+  powershell -File scripts\bootstrap.ps1
 #>
 
 $ErrorActionPreference = "Stop"
@@ -26,10 +27,9 @@ function Require-Tool($name, $hint) {
 }
 
 Write-Output "=== Prerequisites ==="
-Require-Tool git    "Install Git for Windows."
-Require-Tool gh     "Install GitHub CLI: winget install --id GitHub.cli"
-Require-Tool uv     "Install uv: winget install --id astral-sh.uv"
-Require-Tool docker "Install Docker Desktop."
+Require-Tool git "Install Git for Windows."
+Require-Tool gh  "Install GitHub CLI: winget install --id GitHub.cli"
+Require-Tool uv  "Install uv: winget install --id astral-sh.uv"
 
 Write-Output "`n=== Git identity ==="
 $name  = git config --global user.name
@@ -42,13 +42,27 @@ Write-Output "  [ok] $name <$email>"
 Write-Output "`n=== gh auth ==="
 gh auth status 2>&1 | Select-Object -First 4
 
+Write-Output "`n=== .env ==="
+if (-not (Test-Path .env)) {
+    Copy-Item .env.example .env
+    Write-Output "  [created] .env from .env.example -- now edit GROQ_API_KEY before running the agent."
+} else {
+    Write-Output "  [ok] .env exists"
+}
+$envContent = Get-Content .env -Raw
+if ($envContent -match 'gsk_REPLACE_ME') {
+    Write-Warning "GROQ_API_KEY is still the placeholder. Get one at https://console.groq.com/keys"
+}
+
 Write-Output "`n=== uv sync ==="
 uv sync
 
-Write-Output "`n=== docker compose up -d postgres ==="
-docker compose up -d postgres
+Write-Output "`n=== pytest (unit only -- integration needs GROQ_API_KEY) ==="
+uv run pytest -q tests/unit
 
-Write-Output "`n=== Smoke ==="
-Write-Output "  Run: uv run pytest -q"
-Write-Output "  Run: uv run issue-to-pr version"
+Write-Output "`n=== Next steps ==="
+Write-Output "  uv run issue-to-pr version           # sanity check the CLI"
+Write-Output "  uv run pytest -q                     # full suite (includes integration if GROQ_API_KEY set)"
+Write-Output "  uv run issue-to-pr run --issue ...   # once Executor lands (Week 1 next block)"
+Write-Output "  Postgres for Week 3+: see docs/POSTGRES.md (uses pgsql-portable, no Docker)"
 Write-Output "`nDone."

@@ -1,8 +1,14 @@
 # issue-to-pr-agent
 
+[![CI](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://github.com/astral-sh/ruff)
+[![Type-checked: mypy strict](https://img.shields.io/badge/types-mypy%20strict-1f5082.svg)](http://mypy-lang.org/)
+
 > Autonomous coding agent that takes a GitHub issue URL and opens a pull request with a working fix, tests passing, full decision traces. **Hand-rolled tool loop** over **Groq Cloud** with open-source models (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`) — $0 per run on Groq's free tier.
 
-**Status**: Week 1 — walking skeleton + CI. Not usable yet.
+**Status**: Week 1 — LLM client + sandbox done, executor + first end-to-end issue resolution in progress.
 
 ## What this is
 
@@ -70,8 +76,10 @@ uv run issue-to-pr run --issue evals/trivial_issues/001-typo.yaml
 
 ## Roadmap
 
-- [x] Week 1: walking skeleton + CI green (uv project, settings, CLI, GitHub Actions)
-- [ ] Week 1 cont.: Groq LLM client + sandbox runner (LocalSubprocessRunner) + 1 trivial issue resolved end-to-end
+- [x] Week 1.1: walking skeleton + CI green (uv project, settings, CLI, GitHub Actions)
+- [x] Week 1.2: Groq `LLMClient` wrapper (captures content + reasoning + tool_calls + tokens)
+- [x] Week 1.3: `LocalSubprocessRunner` sandbox (whitelist + blacklist + snapshot diff + timeout, no admin required)
+- [ ] Week 1.4: Executor with hand-rolled tool loop + 1 trivial issue resolved end-to-end
 - [ ] Week 2: planner + verifier + 10 trivial issues + CI eval gate
 - [ ] Week 3: Langfuse traces + Postgres persistence + FastAPI + Next.js dashboard
 - [ ] Week 4: SWE-bench Lite subset eval + sandbox hardening (Podman runner) + deploy

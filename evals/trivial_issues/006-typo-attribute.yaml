@@ -1,0 +1,25 @@
+id: "006-typo-attribute"
+description: |
+  The `Person` class stores the name in an attribute called `nname` (two n's) by mistake.
+  The tests expect the attribute to be named `name`.
+
+  Rename the attribute consistently in both `__init__` and `greet`. Do not modify the tests.
+files:
+  person.py: |
+    class Person:
+        def __init__(self, name: str) -> None:
+            self.nname = name
+
+        def greet(self) -> str:
+            return f"Hello, {self.nname}!"
+  test_person.py: |
+    from person import Person
+
+
+    def test_person_name_attribute() -> None:
+        assert Person("Alice").name == "Alice"
+
+
+    def test_person_greet() -> None:
+        assert Person("Alice").greet() == "Hello, Alice!"
+verify_command: "pytest -q test_person.py"

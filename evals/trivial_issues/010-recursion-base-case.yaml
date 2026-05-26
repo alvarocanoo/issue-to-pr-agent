@@ -1,0 +1,27 @@
+id: "010-recursion-base-case"
+description: |
+  The `factorial` function has a wrong base case: it returns 0 when n == 0, but the
+  factorial of 0 is 1 by definition. That makes every result 0.
+
+  Fix the base case to return 1 instead of 0.
+files:
+  factorial.py: |
+    def factorial(n: int) -> int:
+        if n == 0:
+            return 0
+        return n * factorial(n - 1)
+  test_factorial.py: |
+    from factorial import factorial
+
+
+    def test_factorial_0() -> None:
+        assert factorial(0) == 1
+
+
+    def test_factorial_1() -> None:
+        assert factorial(1) == 1
+
+
+    def test_factorial_5() -> None:
+        assert factorial(5) == 120
+verify_command: "pytest -q test_factorial.py"

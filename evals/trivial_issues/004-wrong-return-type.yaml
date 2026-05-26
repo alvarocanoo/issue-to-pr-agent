@@ -1,0 +1,20 @@
+id: "004-wrong-return-type"
+description: |
+  The `total` function is annotated to return an int and the tests assert it returns an int,
+  but the implementation wraps the result in `str(...)`. Remove the wrong conversion so the
+  function returns an int.
+files:
+  totaller.py: |
+    def total(numbers: list[int]) -> int:
+        return str(sum(numbers))  # type: ignore[return-value]
+  test_totaller.py: |
+    from totaller import total
+
+
+    def test_total_value() -> None:
+        assert total([1, 2, 3]) == 6
+
+
+    def test_total_type() -> None:
+        assert isinstance(total([1, 2, 3]), int)
+verify_command: "pytest -q test_totaller.py"

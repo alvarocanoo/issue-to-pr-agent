@@ -1,0 +1,21 @@
+id: "002-off-by-one"
+description: |
+  The `count_up_to` function should return integers from 1 up to and including `n`, but
+  the current implementation is off-by-one and stops at `n - 1`.
+
+  Fix the function so the tests pass. Do not modify the tests.
+files:
+  count.py: |
+    def count_up_to(n: int) -> list[int]:
+        return list(range(1, n))
+  test_count.py: |
+    from count import count_up_to
+
+
+    def test_count_up_to_5() -> None:
+        assert count_up_to(5) == [1, 2, 3, 4, 5]
+
+
+    def test_count_up_to_1() -> None:
+        assert count_up_to(1) == [1]
+verify_command: "pytest -q test_count.py"

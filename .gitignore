@@ -47,3 +47,5 @@ out/
 # Docker
 .docker-data/
 postgres-data/
+
+eval-report.json

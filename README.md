@@ -1,6 +1,7 @@
 # issue-to-pr-agent
 
 [![CI](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/ci.yml)
+[![Evals (trivial)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml/badge.svg)](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://github.com/astral-sh/ruff)
@@ -26,18 +27,23 @@ Most "AI coding" demos either wrap a framework (LangChain, LangGraph, Claude Age
 
 Companion project: [claude-docs-rag](https://github.com/alvarocanoo/claude-docs-rag) — production RAG over the Anthropic Claude API docs.
 
-## Target metrics (declared before coding — see ADR-007)
+## Measured metrics (real, not predicted)
 
-| Metric | Target | Why |
-|---|---|---|
-| `resolved@1` on my 10 trivial issues | ≥ 70% | Baseline sanity — if this fails, the agent is broken |
-| `resolved@1` on SWE-bench Lite (50-issue subset) | TBD after Week 4 | Re-measured against `openai/gpt-oss-120b`; published number replaces this row |
-| Mean wall-clock per issue | ≤ 15 min | Otherwise it does not feel like automation |
-| Cost per issue | $0 (free tier) | Groq free tier; documented rate-limit fallback in ADR-004 |
-| Sandbox escapes | 0 in 100 runs | Validated via filesystem-snapshot diff + Bash whitelist + timeout |
-| Tests reproducible | 100% (eval suite passes 3× in CI without flakes) | Otherwise the "regression gate" is theatre |
+Measured on `openai/gpt-oss-20b` via Groq free tier. CI regenerates these on every push that
+touches the executor / sandbox / LLM client.
 
-Numbers will replace targets in this README as soon as Week 2 evals run.
+| Metric | Target | **Measured** | Source |
+|---|---|---|---|
+| `resolved@1` on trivial issue set (10 issues) | ≥ 70% | **100% (10/10)** | [`evals.yml` CI artifact](https://github.com/alvarocanoo/issue-to-pr-agent/actions/workflows/evals.yml) |
+| Mean wall-clock per issue | ≤ 15 min | **24.3 s** | eval-report.json |
+| Mean tokens per issue | — | ~9 040 (prompt+completion) | eval-report.json |
+| Cost per issue | $0 (free tier) | **$0** — within Groq free-tier RPM/RPD | [console.groq.com](https://console.groq.com/docs/rate-limits) |
+| Sandbox escapes | 0 in 100 runs | 0 in this run; filesystem-snapshot diff stays inside workspace | sandbox tests + runtime |
+| `resolved@1` on SWE-bench Lite (50-subset) | ≥ 25% (Week 4) | TBD | Week 4 |
+
+The trivial set is a sanity gate, not the real test of the agent — every issue is solvable in a
+single-line edit. SWE-bench Lite (300 instances of real bugs from popular Python projects)
+is the published benchmark and lands in Week 4.
 
 ## Architecture (1 paragraph)
 

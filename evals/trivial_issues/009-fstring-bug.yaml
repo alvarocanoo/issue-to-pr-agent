@@ -1,0 +1,21 @@
+id: "009-fstring-bug"
+description: |
+  The `format_price` function builds a price label but forgot the `f` prefix on the
+  string literal, so `{amount:.2f}` is returned literally instead of being interpolated.
+
+  Add the missing `f` prefix so the string becomes an f-string.
+files:
+  pricer.py: |
+    def format_price(amount: float) -> str:
+        return "Price: ${amount:.2f}"
+  test_pricer.py: |
+    from pricer import format_price
+
+
+    def test_format_price_two_decimals() -> None:
+        assert format_price(9.99) == "Price: $9.99"
+
+
+    def test_format_price_integer_amount() -> None:
+        assert format_price(10.0) == "Price: $10.00"
+verify_command: "pytest -q test_pricer.py"

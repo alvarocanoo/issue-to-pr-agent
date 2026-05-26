@@ -1,0 +1,22 @@
+id: "008-division-by-zero"
+description: |
+  The `safe_divide` function should return 0.0 when the divisor is zero (safe default),
+  but the current implementation just does `a / b` and raises ZeroDivisionError.
+
+  Add a guard for `b == 0` that returns 0.0. Normal division must still work for non-zero
+  divisors.
+files:
+  divider.py: |
+    def safe_divide(a: float, b: float) -> float:
+        return a / b
+  test_divider.py: |
+    from divider import safe_divide
+
+
+    def test_safe_divide_normal() -> None:
+        assert safe_divide(10.0, 2.0) == 5.0
+
+
+    def test_safe_divide_by_zero_returns_zero() -> None:
+        assert safe_divide(10.0, 0.0) == 0.0
+verify_command: "pytest -q test_divider.py"

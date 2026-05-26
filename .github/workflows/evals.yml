@@ -1,0 +1,69 @@
+name: Evals (trivial)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'evals/**'
+      - 'src/issue_to_pr/executor/**'
+      - 'src/issue_to_pr/llm/**'
+      - 'src/issue_to_pr/sandbox/**'
+      - 'src/issue_to_pr/issues.py'
+      - 'src/issue_to_pr/settings.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/evals.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'evals/**'
+      - 'src/issue_to_pr/executor/**'
+      - 'src/issue_to_pr/llm/**'
+      - 'src/issue_to_pr/sandbox/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trivial-eval:
+    name: Trivial issue set (10 issues, resolved@1 >= 70%)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install dependencies (locked)
+        run: uv sync --frozen
+
+      - name: Run trivial eval set
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          uv run python -m evals.runner --set trivial --out eval-report.json
+        timeout-minutes: 15
+
+      - name: Check regression gate
+        run: |
+          uv run python -m evals.check_regression --report eval-report.json --threshold 0.70
+
+      - name: Upload eval report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: eval-report.json
+          retention-days: 30

@@ -1,0 +1,19 @@
+id: "003-missing-import"
+description: |
+  The `square_root` function calls `math.sqrt` but the `math` module is not imported,
+  so the test fails with a NameError. Add the missing import without changing anything else.
+files:
+  mathops.py: |
+    def square_root(x: float) -> float:
+        return math.sqrt(x)
+  test_mathops.py: |
+    from mathops import square_root
+
+
+    def test_square_root_of_4() -> None:
+        assert square_root(4.0) == 2.0
+
+
+    def test_square_root_of_9() -> None:
+        assert square_root(9.0) == 3.0
+verify_command: "pytest -q test_mathops.py"

@@ -43,5 +43,7 @@ jobs:
       - name: Mypy (strict)
         run: uv run mypy src
 
-      - name: Pytest (excludes evals)
+      - name: Pytest (excludes evals; integration tests run only if secret set)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: uv run pytest -q -m "not evals"

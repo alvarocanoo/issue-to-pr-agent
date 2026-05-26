@@ -38,7 +38,11 @@ data/
 .DS_Store
 Thumbs.db
 
-# Node / Next.js (cuando llegue)
+# Node / Next.js dashboard
+web/node_modules/
+web/.next/
+web/out/
+web/*.tsbuildinfo
 node_modules/
 .next/
 out/

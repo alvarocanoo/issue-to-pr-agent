@@ -9,7 +9,29 @@
 
 > Autonomous coding agent that takes a GitHub issue URL and opens a pull request with a working fix, tests passing, full decision traces. **Hand-rolled tool loop** over **Groq Cloud** with open-source models (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`) — $0 per run on Groq's free tier.
 
-**Status**: Week 1 — LLM client + sandbox done, executor + first end-to-end issue resolution in progress.
+**Status**: Week 3.1 done — full Planner / Executor / Verifier loop, Postgres-backed run history, Next.js dashboard.
+
+## Dashboard
+
+The agent persists every run to Postgres; a Next.js 16 dashboard at `web/` reads the FastAPI surface and renders the run list, per-run timeline, planner output and verifier verdict.
+
+![Dashboard home: stats bar + recent runs](docs/images/dashboard-home.png)
+
+![Run detail: plan, verdict, raw payload](docs/images/dashboard-detail.png)
+
+Run locally:
+
+```powershell
+# 1. Postgres (pgsql-portable, see docs/POSTGRES.md)
+# 2. API server
+uv run uvicorn issue_to_pr.api.server:app --host 127.0.0.1 --port 8765
+# 3. Dashboard
+cd web; npm install; npm run dev
+# 4. Open http://localhost:3000
+```
+
+The screenshots above use seed data from `scripts/seed_runs.py` — replace with real runs via
+`uv run python -m evals.runner --set trivial --persist`.
 
 ## What this is
 
@@ -95,7 +117,8 @@ uv run issue-to-pr run --issue evals/trivial_issues/001-typo.yaml
 - [x] Week 1.6: ADRs 001/003/004/007/008/009 (architecture decisions defendible in interview)
 - [x] Week 2.1: Planner + Verifier + Orchestrator (Reflexion loop). ADR-002 written; A/B vs baseline next eval run.
 - [x] Week 3.1: Postgres persistence (`storage/`) + read-only FastAPI surface (`api/`) — ADR-006.
-- [ ] Week 3.2: Langfuse traces + Next.js dashboard reading from `/runs`.
+- [x] Week 3.2: Next.js 16 dashboard (`web/`) — stats, run list, per-run plan + verdict timeline.
+- [ ] Week 3.3: Langfuse traces (real-time per-tool-call observability).
 - [ ] Week 4: SWE-bench Lite subset eval + sandbox hardening (Podman runner) + deploy.
 - [ ] Weeks 5-6: ablation studies + blog posts + README final with measured numbers.
 

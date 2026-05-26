@@ -27,7 +27,6 @@ def estimate_cost_usd(model: str, prompt_tokens: int, completion_tokens: int) ->
     if prices is None:
         return 0.0
     input_price, output_price = prices
-    return (
-        (prompt_tokens / 1_000_000) * input_price
-        + (completion_tokens / 1_000_000) * output_price
-    )
+    return (prompt_tokens / 1_000_000) * input_price + (
+        completion_tokens / 1_000_000
+    ) * output_price

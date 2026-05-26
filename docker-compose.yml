@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: itp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: itp
+      POSTGRES_PASSWORD: itp
+      POSTGRES_DB: itp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U itp -d itp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

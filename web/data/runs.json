@@ -1,0 +1,892 @@
+{
+  "count": 20,
+  "items": [
+    {
+      "id": 30,
+      "task_id": "010-recursion-base-case",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 2,
+      "executor_iterations": 9,
+      "verify_exit_code": 0,
+      "prompt_tokens": 9613,
+      "completion_tokens": 564,
+      "elapsed_seconds": 46.41,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "factorial.py",
+          "test_factorial.py"
+        ],
+        "files_to_modify": [
+          "factorial.py"
+        ],
+        "steps": [
+          "Read factorial.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 4,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 1441,
+            "completion_tokens": 84,
+            "elapsed_seconds": 6.96,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 9,
+            "exit_reason": "done",
+            "tool_calls_count": 8,
+            "prompt_tokens": 5767,
+            "completion_tokens": 338,
+            "elapsed_seconds": 25.53,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "task_id": "009-fstring-bug",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 2,
+      "executor_iterations": 10,
+      "verify_exit_code": 0,
+      "prompt_tokens": 10014,
+      "completion_tokens": 511,
+      "elapsed_seconds": 53.46,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "pricer.py",
+          "test_pricer.py"
+        ],
+        "files_to_modify": [
+          "pricer.py"
+        ],
+        "steps": [
+          "Read pricer.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 5,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 1502,
+            "completion_tokens": 76,
+            "elapsed_seconds": 8.02,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 10,
+            "exit_reason": "done",
+            "tool_calls_count": 9,
+            "prompt_tokens": 6008,
+            "completion_tokens": 306,
+            "elapsed_seconds": 29.4,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "task_id": "008-division-by-zero",
+      "mode": "orchestrator",
+      "success": false,
+      "reflexion_iterations": 3,
+      "executor_iterations": 2,
+      "verify_exit_code": 1,
+      "prompt_tokens": 4941,
+      "completion_tokens": 217,
+      "elapsed_seconds": 21.38,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "divider.py",
+          "test_divider.py"
+        ],
+        "files_to_modify": [
+          "divider.py"
+        ],
+        "steps": [
+          "Read divider.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": false,
+        "reasoning": "Verify command still exits non-zero after the agent gave up; the fix does not address the assertion.",
+        "feedback_for_executor": "Re-read the verify_stderr from the previous attempt and target the failing assertion specifically."
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 3,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 494,
+            "completion_tokens": 21,
+            "elapsed_seconds": 2.14,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 3,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 494,
+            "completion_tokens": 21,
+            "elapsed_seconds": 2.14,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 3,
+          "execution": {
+            "executor_iterations": 2,
+            "exit_reason": "done",
+            "tool_calls_count": 2,
+            "prompt_tokens": 2964,
+            "completion_tokens": 130,
+            "elapsed_seconds": 11.76,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Verify command still exits non-zero after the agent gave up; the fix does not address the assertion.",
+            "feedback_for_executor": "Re-read the verify_stderr from the previous attempt and target the failing assertion specifically."
+          }
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "task_id": "007-mutable-default",
+      "mode": "orchestrator",
+      "success": false,
+      "reflexion_iterations": 3,
+      "executor_iterations": 2,
+      "verify_exit_code": 1,
+      "prompt_tokens": 5715,
+      "completion_tokens": 266,
+      "elapsed_seconds": 32.02,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "appender.py",
+          "test_appender.py"
+        ],
+        "files_to_modify": [
+          "appender.py"
+        ],
+        "steps": [
+          "Read appender.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": false,
+        "reasoning": "Verify command still exits non-zero after the agent gave up; the fix does not address the assertion.",
+        "feedback_for_executor": "Re-read the verify_stderr from the previous attempt and target the failing assertion specifically."
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 3,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 571,
+            "completion_tokens": 26,
+            "elapsed_seconds": 3.2,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 3,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 571,
+            "completion_tokens": 26,
+            "elapsed_seconds": 3.2,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 3,
+          "execution": {
+            "executor_iterations": 2,
+            "exit_reason": "done",
+            "tool_calls_count": 2,
+            "prompt_tokens": 3429,
+            "completion_tokens": 159,
+            "elapsed_seconds": 17.61,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Verify command still exits non-zero after the agent gave up; the fix does not address the assertion.",
+            "feedback_for_executor": "Re-read the verify_stderr from the previous attempt and target the failing assertion specifically."
+          }
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "task_id": "006-typo-attribute",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 2,
+      "executor_iterations": 9,
+      "verify_exit_code": 0,
+      "prompt_tokens": 9385,
+      "completion_tokens": 571,
+      "elapsed_seconds": 50.48,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "person.py",
+          "test_person.py"
+        ],
+        "files_to_modify": [
+          "person.py"
+        ],
+        "steps": [
+          "Read person.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 4,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 1407,
+            "completion_tokens": 85,
+            "elapsed_seconds": 7.57,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 9,
+            "exit_reason": "done",
+            "tool_calls_count": 8,
+            "prompt_tokens": 5631,
+            "completion_tokens": 342,
+            "elapsed_seconds": 27.76,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "task_id": "005-none-comparison",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 1,
+      "executor_iterations": 11,
+      "verify_exit_code": 0,
+      "prompt_tokens": 8408,
+      "completion_tokens": 557,
+      "elapsed_seconds": 31.78,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "emptiness.py",
+          "test_emptiness.py"
+        ],
+        "files_to_modify": [
+          "emptiness.py"
+        ],
+        "steps": [
+          "Read emptiness.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 11,
+            "exit_reason": "done",
+            "tool_calls_count": 10,
+            "prompt_tokens": 5044,
+            "completion_tokens": 334,
+            "elapsed_seconds": 17.48,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "task_id": "004-wrong-return-type",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 2,
+      "executor_iterations": 12,
+      "verify_exit_code": 0,
+      "prompt_tokens": 11883,
+      "completion_tokens": 837,
+      "elapsed_seconds": 50.61,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "totaller.py",
+          "test_totaller.py"
+        ],
+        "files_to_modify": [
+          "totaller.py"
+        ],
+        "steps": [
+          "Read totaller.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 6,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 1782,
+            "completion_tokens": 125,
+            "elapsed_seconds": 7.59,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 12,
+            "exit_reason": "done",
+            "tool_calls_count": 11,
+            "prompt_tokens": 7129,
+            "completion_tokens": 502,
+            "elapsed_seconds": 27.84,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "task_id": "003-missing-import",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 1,
+      "executor_iterations": 15,
+      "verify_exit_code": 0,
+      "prompt_tokens": 11424,
+      "completion_tokens": 742,
+      "elapsed_seconds": 55.33,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "mathops.py",
+          "test_mathops.py"
+        ],
+        "files_to_modify": [
+          "mathops.py"
+        ],
+        "steps": [
+          "Read mathops.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 15,
+            "exit_reason": "done",
+            "tool_calls_count": 14,
+            "prompt_tokens": 6854,
+            "completion_tokens": 445,
+            "elapsed_seconds": 30.43,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "task_id": "002-off-by-one",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 3,
+      "executor_iterations": 8,
+      "verify_exit_code": 0,
+      "prompt_tokens": 20770,
+      "completion_tokens": 1146,
+      "elapsed_seconds": 65.92,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "count.py",
+          "test_count.py"
+        ],
+        "files_to_modify": [
+          "count.py"
+        ],
+        "steps": [
+          "Read count.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 4,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 2077,
+            "completion_tokens": 114,
+            "elapsed_seconds": 6.59,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 4,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 2077,
+            "completion_tokens": 114,
+            "elapsed_seconds": 6.59,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 3,
+          "execution": {
+            "executor_iterations": 8,
+            "exit_reason": "done",
+            "tool_calls_count": 7,
+            "prompt_tokens": 12462,
+            "completion_tokens": 687,
+            "elapsed_seconds": 36.26,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "task_id": "001-typo",
+      "mode": "orchestrator",
+      "success": true,
+      "reflexion_iterations": 2,
+      "executor_iterations": 7,
+      "verify_exit_code": 0,
+      "prompt_tokens": 7440,
+      "completion_tokens": 352,
+      "elapsed_seconds": 6.84,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {
+        "files_to_read": [
+          "greet.py",
+          "test_greet.py"
+        ],
+        "files_to_modify": [
+          "greet.py"
+        ],
+        "steps": [
+          "Read greet.py and the matching test file.",
+          "Identify the bug from the task description.",
+          "Apply the smallest fix.",
+          "Run the verify command and confirm exit 0."
+        ]
+      },
+      "verdict": {
+        "approved": true,
+        "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+        "feedback_for_executor": null
+      },
+      "history": [
+        {
+          "iteration": 1,
+          "execution": {
+            "executor_iterations": 3,
+            "exit_reason": "done",
+            "tool_calls_count": 4,
+            "prompt_tokens": 1116,
+            "completion_tokens": 52,
+            "elapsed_seconds": 1.03,
+            "verify_exit_code": 1
+          },
+          "verdict": {
+            "approved": false,
+            "reasoning": "Tests still fail; the previous attempt did not address the root cause described in the task.",
+            "feedback_for_executor": "Read the verify_stderr in the previous attempt and adjust the change to make the failing assertion pass."
+          }
+        },
+        {
+          "iteration": 2,
+          "execution": {
+            "executor_iterations": 7,
+            "exit_reason": "done",
+            "tool_calls_count": 6,
+            "prompt_tokens": 4464,
+            "completion_tokens": 211,
+            "elapsed_seconds": 3.76,
+            "verify_exit_code": 0
+          },
+          "verdict": {
+            "approved": true,
+            "reasoning": "Minimal on-topic fix; tests pass and no test files were modified.",
+            "feedback_for_executor": null
+          }
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "task_id": "010-recursion-base-case",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 3,
+      "verify_exit_code": 1,
+      "prompt_tokens": 1636,
+      "completion_tokens": 101,
+      "elapsed_seconds": 9.57,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 19,
+      "task_id": "009-fstring-bug",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 3,
+      "verify_exit_code": 1,
+      "prompt_tokens": 1629,
+      "completion_tokens": 96,
+      "elapsed_seconds": 4.54,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 18,
+      "task_id": "008-division-by-zero",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 3,
+      "verify_exit_code": 1,
+      "prompt_tokens": 1674,
+      "completion_tokens": 100,
+      "elapsed_seconds": 7.11,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 17,
+      "task_id": "007-mutable-default",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 3,
+      "verify_exit_code": 1,
+      "prompt_tokens": 1651,
+      "completion_tokens": 99,
+      "elapsed_seconds": 3.57,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 16,
+      "task_id": "006-typo-attribute",
+      "mode": "executor",
+      "success": true,
+      "reflexion_iterations": null,
+      "executor_iterations": 11,
+      "verify_exit_code": 0,
+      "prompt_tokens": 7386,
+      "completion_tokens": 567,
+      "elapsed_seconds": 30.82,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 15,
+      "task_id": "005-none-comparison",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 6,
+      "verify_exit_code": 1,
+      "prompt_tokens": 3548,
+      "completion_tokens": 194,
+      "elapsed_seconds": 6.36,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 14,
+      "task_id": "004-wrong-return-type",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 3,
+      "verify_exit_code": 1,
+      "prompt_tokens": 1596,
+      "completion_tokens": 96,
+      "elapsed_seconds": 2.15,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 13,
+      "task_id": "003-missing-import",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 3,
+      "verify_exit_code": 1,
+      "prompt_tokens": 1582,
+      "completion_tokens": 98,
+      "elapsed_seconds": 1.54,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 12,
+      "task_id": "002-off-by-one",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 3,
+      "verify_exit_code": 1,
+      "prompt_tokens": 1616,
+      "completion_tokens": 98,
+      "elapsed_seconds": 1.56,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    },
+    {
+      "id": 11,
+      "task_id": "001-typo",
+      "mode": "executor",
+      "success": false,
+      "reflexion_iterations": null,
+      "executor_iterations": 4,
+      "verify_exit_code": 1,
+      "prompt_tokens": 2217,
+      "completion_tokens": 131,
+      "elapsed_seconds": 47.24,
+      "started_at": "2026-05-26T14:00:00+00:00",
+      "finished_at": "2026-05-26T14:30:00+00:00",
+      "plan": {},
+      "verdict": {},
+      "history": []
+    }
+  ]
+}

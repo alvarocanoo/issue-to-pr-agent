@@ -30,6 +30,10 @@ data/
 *.db
 *.sqlite
 
+# But the dashboard's embedded snapshot IS source — must be committed.
+!web/data/
+!web/data/*.json
+
 # IDE / OS
 .vscode/
 .idea/

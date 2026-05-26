@@ -4,6 +4,7 @@ import {
   fetchRun,
   formatElapsed,
   formatTokens,
+  formatUsd,
   type HistoryEntry,
   type StoredRun,
 } from "@/lib/api";
@@ -51,13 +52,18 @@ export default async function RunPage({ params }: { params: Promise<Params> }) {
           </p>
         </header>
 
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <KV label="executor iter" value={run.executor_iterations.toString()} />
           <KV label="reflexion iter" value={(run.reflexion_iterations ?? 1).toString()} />
           <KV
             label="tokens"
             value={formatTokens(run.prompt_tokens + run.completion_tokens)}
             hint={`p ${formatTokens(run.prompt_tokens)} · c ${formatTokens(run.completion_tokens)}`}
+          />
+          <KV
+            label="est. cost"
+            value={formatUsd(run.estimated_cost_usd ?? 0)}
+            hint="Groq list price"
           />
           <KV label="time" value={formatElapsed(run.elapsed_seconds)} />
         </section>

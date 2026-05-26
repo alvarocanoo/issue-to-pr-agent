@@ -62,6 +62,7 @@ def test_issue_result_to_dict_shape() -> None:
         "exit_reason": "done",
         "prompt_tokens": 100,
         "completion_tokens": 20,
+        "estimated_cost_usd": 0.0,
         "elapsed_seconds": 1.2,
         "verify_exit_code": 0,
         "reflexion_iterations": 1,

@@ -45,6 +45,7 @@ class ExecutionResult:
     verify_exit_code: int = -1
     verify_stdout: str = ""
     verify_stderr: str = ""
+    estimated_cost_usd: float = 0.0
 
     @property
     def total_tokens(self) -> int:

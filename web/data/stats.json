@@ -4,6 +4,7 @@
   "resolved_at_1": 0.45,
   "total_prompt_tokens": 124128,
   "total_completion_tokens": 7343,
+  "total_estimated_cost_usd": 0.023,
   "total_elapsed_seconds": 528.69,
   "by_mode": {
     "executor": 10,

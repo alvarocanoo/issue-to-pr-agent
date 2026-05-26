@@ -43,6 +43,7 @@ class IssueResult:
     completion_tokens: int
     elapsed_seconds: float
     verify_exit_code: int
+    estimated_cost_usd: float = 0.0
     reflexion_iterations: int = 1  # 1 with --executor-only; >=1 with orchestrator
     verifier_approved: bool | None = None  # None when running executor-only
 
@@ -54,6 +55,7 @@ class IssueResult:
             "exit_reason": self.exit_reason,
             "prompt_tokens": self.prompt_tokens,
             "completion_tokens": self.completion_tokens,
+            "estimated_cost_usd": self.estimated_cost_usd,
             "elapsed_seconds": self.elapsed_seconds,
             "verify_exit_code": self.verify_exit_code,
             "reflexion_iterations": self.reflexion_iterations,
@@ -89,6 +91,7 @@ def _run_one_executor(
                     prompt_tokens=outcome.total_prompt_tokens,
                     completion_tokens=outcome.total_completion_tokens,
                     elapsed_seconds=outcome.elapsed_seconds,
+                    estimated_cost_usd=outcome.estimated_cost_usd,
                 )
             except Exception as exc:  # noqa: BLE001
                 print(f"[eval]   WARNING: could not persist run {spec.id}: {exc}", flush=True)
@@ -174,6 +177,7 @@ def _run_one_orchestrator(
                     prompt_tokens=outcome.total_prompt_tokens,
                     completion_tokens=outcome.total_completion_tokens,
                     elapsed_seconds=outcome.elapsed_seconds,
+                    estimated_cost_usd=sum(e.estimated_cost_usd for e, _ in outcome.history),
                     reflexion_iterations=outcome.reflexion_iterations,
                     plan=asdict(outcome.plan),
                     verdict=asdict(outcome.final_verdict),
@@ -190,6 +194,7 @@ def _run_one_orchestrator(
             completion_tokens=outcome.total_completion_tokens,
             elapsed_seconds=round(outcome.elapsed_seconds, 2),
             verify_exit_code=final.verify_exit_code,
+            estimated_cost_usd=sum(e.estimated_cost_usd for e, _ in outcome.history),
             reflexion_iterations=outcome.reflexion_iterations,
             verifier_approved=outcome.final_verdict.approved,
         )
@@ -279,6 +284,7 @@ def run_eval_set(
         "resolved_at_1": (solved / total) if total else 0.0,
         "total_prompt_tokens": sum(r.prompt_tokens for r in results),
         "total_completion_tokens": sum(r.completion_tokens for r in results),
+        "total_estimated_cost_usd": sum(r.estimated_cost_usd for r in results),
         "total_elapsed_seconds": round(total_elapsed, 2),
         "results": [r.to_dict() for r in results],
     }

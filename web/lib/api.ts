@@ -41,6 +41,7 @@ export type StoredRun = {
   verify_exit_code: number;
   prompt_tokens: number;
   completion_tokens: number;
+  estimated_cost_usd: number;
   elapsed_seconds: number;
   started_at: string;
   finished_at: string | null;
@@ -55,6 +56,7 @@ export type Stats = {
   resolved_at_1: number;
   total_prompt_tokens: number;
   total_completion_tokens: number;
+  total_estimated_cost_usd: number;
   total_elapsed_seconds: number;
   by_mode: Record<string, number>;
 };
@@ -95,6 +97,13 @@ export function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
   return n.toString();
+}
+
+export function formatUsd(n: number): string {
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  if (n >= 0.01) return `$${n.toFixed(3)}`;
+  if (n >= 0.0001) return `$${n.toFixed(4)}`;
+  return `$${n.toExponential(1)}`;
 }
 
 export function formatElapsed(seconds: number): string {

@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { fetchRuns, fetchStats, formatElapsed, formatTokens, type StoredRun } from "@/lib/api";
+import {
+  fetchRuns,
+  fetchStats,
+  formatElapsed,
+  formatTokens,
+  formatUsd,
+  type StoredRun,
+} from "@/lib/api";
 
 // Static so the GitHub Pages export works; in `npm run dev` Next.js ignores this and
 // re-renders on every request anyway, so the live mode keeps working locally.
@@ -62,8 +69,9 @@ export default async function Home() {
 
 function StatsBar({ stats }: { stats: Awaited<ReturnType<typeof fetchStats>> }) {
   const resolvedPct = (stats.resolved_at_1 * 100).toFixed(1);
+  const totalCost = stats.total_estimated_cost_usd ?? 0;
   return (
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
       <Stat
         label="resolved@1"
         value={`${resolvedPct}%`}
@@ -80,6 +88,11 @@ function StatsBar({ stats }: { stats: Awaited<ReturnType<typeof fetchStats>> }) 
         label="tokens"
         value={formatTokens(stats.total_prompt_tokens + stats.total_completion_tokens)}
         hint={`prompt ${formatTokens(stats.total_prompt_tokens)} · completion ${formatTokens(stats.total_completion_tokens)}`}
+      />
+      <Stat
+        label="est. cost"
+        value={formatUsd(totalCost)}
+        hint="Groq list price (billed $0 on free tier)"
       />
       <Stat
         label="time"
@@ -113,6 +126,7 @@ function RunsTable({ runs }: { runs: StoredRun[] }) {
             <th className="px-4 py-3 text-right">iter</th>
             <th className="px-4 py-3 text-right">refl</th>
             <th className="px-4 py-3 text-right">tokens</th>
+            <th className="px-4 py-3 text-right">cost</th>
             <th className="px-4 py-3 text-right">time</th>
           </tr>
         </thead>
@@ -140,6 +154,9 @@ function RunsTable({ runs }: { runs: StoredRun[] }) {
               </td>
               <td className="px-4 py-2 text-right tabular-nums text-zinc-300">
                 {formatTokens(r.prompt_tokens + r.completion_tokens)}
+              </td>
+              <td className="px-4 py-2 text-right tabular-nums text-zinc-400">
+                {formatUsd(r.estimated_cost_usd ?? 0)}
               </td>
               <td className="px-4 py-2 text-right tabular-nums text-zinc-400">
                 {formatElapsed(r.elapsed_seconds)}

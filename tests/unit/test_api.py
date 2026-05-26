@@ -21,6 +21,7 @@ def _stored_run(*, run_id: int = 1, task_id: str = "t") -> StoredRun:
         verify_exit_code=0,
         prompt_tokens=100,
         completion_tokens=10,
+        estimated_cost_usd=0.00006,
         elapsed_seconds=1.5,
         started_at="2026-05-26T10:00:00+00:00",
         finished_at="2026-05-26T10:00:02+00:00",

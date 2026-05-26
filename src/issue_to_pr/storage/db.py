@@ -35,6 +35,7 @@ class StoredRun:
     verify_exit_code: int
     prompt_tokens: int
     completion_tokens: int
+    estimated_cost_usd: float
     elapsed_seconds: float
     started_at: str  # ISO 8601 (timestamptz cast to str by psycopg dict_row)
     finished_at: str | None
@@ -78,6 +79,7 @@ class Storage:
         prompt_tokens: int,
         completion_tokens: int,
         elapsed_seconds: float,
+        estimated_cost_usd: float = 0.0,
         reflexion_iterations: int | None = None,
         plan: dict[str, Any] | None = None,
         verdict: dict[str, Any] | None = None,
@@ -89,13 +91,13 @@ class Storage:
         sql = """
             INSERT INTO runs (
                 task_id, mode, success, reflexion_iterations, executor_iterations,
-                verify_exit_code, prompt_tokens, completion_tokens, elapsed_seconds,
-                plan, verdict, history, finished_at
+                verify_exit_code, prompt_tokens, completion_tokens, estimated_cost_usd,
+                elapsed_seconds, plan, verdict, history, finished_at
             )
             VALUES (
                 %(task_id)s, %(mode)s, %(success)s, %(reflexion_iterations)s,
                 %(executor_iterations)s, %(verify_exit_code)s, %(prompt_tokens)s,
-                %(completion_tokens)s, %(elapsed_seconds)s,
+                %(completion_tokens)s, %(estimated_cost_usd)s, %(elapsed_seconds)s,
                 %(plan)s::jsonb, %(verdict)s::jsonb, %(history)s::jsonb, NOW()
             )
             RETURNING id
@@ -109,6 +111,7 @@ class Storage:
             "verify_exit_code": verify_exit_code,
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
+            "estimated_cost_usd": estimated_cost_usd,
             "elapsed_seconds": elapsed_seconds,
             "plan": json.dumps(plan or {}),
             "verdict": json.dumps(verdict or {}),
@@ -163,7 +166,8 @@ class Storage:
             raise ValueError("limit must be in 1..500")
         sql = """
             SELECT id, task_id, mode, success, reflexion_iterations, executor_iterations,
-                   verify_exit_code, prompt_tokens, completion_tokens, elapsed_seconds,
+                   verify_exit_code, prompt_tokens, completion_tokens, estimated_cost_usd,
+                   elapsed_seconds,
                    started_at::text AS started_at,
                    finished_at::text AS finished_at,
                    plan, verdict, history
@@ -179,7 +183,8 @@ class Storage:
     def get_run(self, run_id: int) -> StoredRun | None:
         sql = """
             SELECT id, task_id, mode, success, reflexion_iterations, executor_iterations,
-                   verify_exit_code, prompt_tokens, completion_tokens, elapsed_seconds,
+                   verify_exit_code, prompt_tokens, completion_tokens, estimated_cost_usd,
+                   elapsed_seconds,
                    started_at::text AS started_at,
                    finished_at::text AS finished_at,
                    plan, verdict, history
@@ -203,6 +208,7 @@ class Storage:
             verify_exit_code=row["verify_exit_code"],
             prompt_tokens=row["prompt_tokens"],
             completion_tokens=row["completion_tokens"],
+            estimated_cost_usd=row.get("estimated_cost_usd") or 0.0,
             elapsed_seconds=row["elapsed_seconds"],
             started_at=row["started_at"],
             finished_at=row["finished_at"],

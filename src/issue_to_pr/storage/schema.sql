@@ -14,12 +14,16 @@ CREATE TABLE IF NOT EXISTS runs (
     verify_exit_code      INTEGER NOT NULL,
     prompt_tokens         INTEGER NOT NULL DEFAULT 0,
     completion_tokens     INTEGER NOT NULL DEFAULT 0,
+    estimated_cost_usd    REAL    NOT NULL DEFAULT 0.0,
     elapsed_seconds       REAL    NOT NULL,
     -- JSONB payloads. Always present; objects can be empty {}.
     plan            JSONB       NOT NULL DEFAULT '{}'::jsonb,
     verdict         JSONB       NOT NULL DEFAULT '{}'::jsonb,
     history         JSONB       NOT NULL DEFAULT '[]'::jsonb
 );
+
+-- Idempotent column add for upgrades (skips when already there).
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS estimated_cost_usd REAL NOT NULL DEFAULT 0.0;
 
 CREATE INDEX IF NOT EXISTS idx_runs_task_id     ON runs (task_id);
 CREATE INDEX IF NOT EXISTS idx_runs_started_at  ON runs (started_at DESC);

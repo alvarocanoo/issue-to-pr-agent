@@ -54,6 +54,7 @@ def build_app(storage: Storage | None = None) -> FastAPI:
         solved = sum(1 for r in runs if r.success)
         prompt_t = sum(r.prompt_tokens for r in runs)
         completion_t = sum(r.completion_tokens for r in runs)
+        cost = sum(r.estimated_cost_usd for r in runs)
         elapsed = sum(r.elapsed_seconds for r in runs)
         modes: dict[str, int] = {"executor": 0, "orchestrator": 0}
         for r in runs:
@@ -64,6 +65,7 @@ def build_app(storage: Storage | None = None) -> FastAPI:
             "resolved_at_1": (solved / total) if total else 0.0,
             "total_prompt_tokens": prompt_t,
             "total_completion_tokens": completion_t,
+            "total_estimated_cost_usd": cost,
             "total_elapsed_seconds": elapsed,
             "by_mode": modes,
         }

@@ -21,6 +21,8 @@ from typing import Any, Literal
 
 from groq import Groq, RateLimitError
 
+from issue_to_pr.llm.pricing import estimate_cost_usd
+
 logger = logging.getLogger(__name__)
 
 Role = Literal["system", "user", "assistant", "tool"]
@@ -69,6 +71,7 @@ class LLMResponse:
     model: str = ""
     prompt_tokens: int = 0
     completion_tokens: int = 0
+    estimated_cost_usd: float = 0.0  # pay-as-you-go list price; free tier actually billed $0
 
     @property
     def total_tokens(self) -> int:
@@ -172,14 +175,17 @@ class LLMClient:
             )
 
         usage = resp.usage
+        prompt_tokens = usage.prompt_tokens if usage else 0
+        completion_tokens = usage.completion_tokens if usage else 0
         return LLMResponse(
             content=(msg.content or "").strip(),
             reasoning=getattr(msg, "reasoning", None),
             tool_calls=tool_calls,
             finish_reason=choice.finish_reason or "stop",
             model=resp.model,
-            prompt_tokens=usage.prompt_tokens if usage else 0,
-            completion_tokens=usage.completion_tokens if usage else 0,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            estimated_cost_usd=estimate_cost_usd(resp.model, prompt_tokens, completion_tokens),
         )
 
     def _chat_with_retries(self, request: dict[str, Any]) -> Any:

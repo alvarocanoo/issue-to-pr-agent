@@ -109,6 +109,7 @@ class Executor:
         tool_records: list[ToolCallRecord] = []
         total_prompt = 0
         total_completion = 0
+        total_cost = 0.0
         exit_reason = "max_iterations"
         final_content = ""
 
@@ -121,6 +122,7 @@ class Executor:
             )
             total_prompt += resp.prompt_tokens
             total_completion += resp.completion_tokens
+            total_cost += resp.estimated_cost_usd
             final_content = resp.content
             messages.append(LLMMessage(role="assistant", content=resp.content))
 
@@ -167,4 +169,5 @@ class Executor:
             verify_exit_code=verify.exit_code,
             verify_stdout=verify.stdout,
             verify_stderr=verify.stderr,
+            estimated_cost_usd=total_cost,
         )

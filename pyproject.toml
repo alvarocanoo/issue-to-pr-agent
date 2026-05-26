@@ -1,7 +1,7 @@
 [project]
 name = "issue-to-pr-agent"
 version = "0.1.0"
-description = "Autonomous agent that turns a GitHub issue into a PR, with sandboxed execution, traces and evals."
+description = "Autonomous agent that turns a GitHub issue into a PR. Hand-rolled tool loop over Groq Cloud + open-source models."
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
@@ -9,7 +9,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "claude-agent-sdk",
+    "groq>=0.13",
     "pydantic>=2.7",
     "pydantic-settings>=2.4",
     "typer>=0.12",
@@ -53,7 +53,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC", "S", "RUF"]
-ignore = ["S101"]  # allow `assert` in tests
+ignore = ["S101"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S"]
@@ -68,14 +68,14 @@ disallow_untyped_defs = true
 no_implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = ["langfuse.*", "claude_agent_sdk.*"]
+module = ["groq.*", "langfuse.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
-    "evals: marks tests as eval suite (slow, costs API tokens)",
+    "evals: marks tests as eval suite (slow, hits Groq rate limits)",
     "integration: marks tests that hit external services",
 ]
 addopts = "-ra --strict-markers"

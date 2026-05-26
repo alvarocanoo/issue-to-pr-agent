@@ -14,25 +14,27 @@ User runs: issue-to-pr run --issue <url>
                  │
                  ▼
        ┌────────────────────┐
-       │      Planner       │  Sonnet 4.6 → structured plan (JSON)
+       │      Planner       │  openai/gpt-oss-120b → structured plan (JSON)
        └─────────┬──────────┘
                  │
                  ▼
        ┌────────────────────┐
-       │      Executor      │  Haiku 4.5 driving Claude Agent SDK
-       │  (Read/Edit/Bash/  │  PreToolUse hook validates each Bash
-       │   Grep/Glob)       │  PostToolUse hook logs to Langfuse
+       │      Executor      │  openai/gpt-oss-20b driving hand-rolled tool loop
+       │  (Read/Edit/Bash/  │  PreToolUse validator: Bash whitelist
+       │   Grep/Glob)       │  PostToolUse logger: spans to Langfuse
        └─────────┬──────────┘
                  │ runs inside
                  ▼
        ┌────────────────────┐
-       │  Docker sandbox    │  python:3.12-slim, --network none,
-       │  per-task          │  RW mount of cloned repo, 20m watchdog
+       │  SandboxRunner     │  LocalSubprocessRunner (default, no admin):
+       │  (pluggable)       │    tempdir cwd, clean env, timeout, fs snapshot diff
+       │                    │  ContainerRunner (opt-in, Podman per-task):
+       │                    │    --network none, RW mount, 20m watchdog
        └─────────┬──────────┘
                  │
                  ▼
        ┌────────────────────┐
-       │     Verifier       │  Sonnet 4.6 LLM-as-judge on diff + tests
+       │     Verifier       │  openai/gpt-oss-120b LLM-as-judge on diff + tests
        │  (LLM-as-judge)    │  Decides: open PR or reject + retry
        └─────────┬──────────┘
                  │ if approved
@@ -42,18 +44,34 @@ User runs: issue-to-pr run --issue <url>
        └────────────────────┘
 
 Side-channel (every step):
-  - Langfuse: span per tool call, tokens, cost, latency
+  - LLMClient (src/issue_to_pr/llm/client.py): single Groq wrapper, captures tokens + cost
+  - Langfuse: span per tool call, latency
   - Postgres: run metadata + JSONB raw trace
   - FastAPI SSE: live event stream to Next.js dashboard
 ```
 
 ## Why three models
 
-Cost analysis lives in [adr/004-multi-model-routing.md](adr/004-multi-model-routing.md). Summary: planner and verifier are small fractions of total tokens (~10% each) and benefit from Sonnet's reasoning. Executor burns 80% of tokens in tool loops and works fine on Haiku for routine Read/Edit/Bash.
+Cost analysis lives in [adr/004-multi-model-routing.md](adr/004-multi-model-routing.md).
+Summary: Groq free tier costs $0/run regardless of model, so the routing optimisation is **speed
+and capability**, not cost. `openai/gpt-oss-20b` at 1000 tps wins the executor loop (lots of
+short tool calls); `openai/gpt-oss-120b` at 500 tps wins planner and verifier where reasoning
+quality matters more than throughput.
 
-## Why Docker `--network none`
+## Why hand-rolled tool loop instead of an agent framework
 
-See [adr/003-docker-sandbox.md](adr/003-docker-sandbox.md). LLM-generated shell commands are untrusted code. Network isolation + RW mount of only the cloned repo workdir means: worst case the agent corrupts its own scratch directory.
+See [adr/001-no-agent-framework.md](adr/001-no-agent-framework.md). Frameworks (LangChain,
+LangGraph, Claude Agent SDK) hide the tool loop behind opinionated abstractions. Building the
+loop from scratch keeps every decision visible and defendible in code review, and avoids
+provider lock-in (the LLM client is a single file).
+
+## Why a pluggable sandbox
+
+See [adr/003-sandbox.md](adr/003-sandbox.md). LLM-generated shell commands are untrusted code.
+In Windows dev without admin we cannot run Docker/Podman, so `LocalSubprocessRunner` enforces
+isolation through tempdir CWD + cleared env + Bash whitelist + filesystem-snapshot diff. The
+same `SandboxRunner` interface is implemented by `ContainerRunner` (Podman per-task,
+`--network none`) — swappable behind a config flag once Podman is installed.
 
 ## What is NOT in this project
 

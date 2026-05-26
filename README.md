@@ -1,64 +1,64 @@
 # issue-to-pr-agent
 
-> Autonomous agent that takes a GitHub issue URL and opens a pull request with a working fix, tests passing, full decision traces — all inside an isolated Docker sandbox.
+> Autonomous coding agent that takes a GitHub issue URL and opens a pull request with a working fix, tests passing, full decision traces. **Hand-rolled tool loop** over **Groq Cloud** with open-source models (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`) — $0 per run on Groq's free tier.
 
-**Status**: Week 1 — walking skeleton in progress. Not usable yet.
+**Status**: Week 1 — walking skeleton + CI. Not usable yet.
 
 ## What this is
 
-A production-grade coding agent built on the [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview). Given an issue in a Python repo, it:
+A production-grade coding agent built **without an agent framework**: the tool loop, hooks, sandboxing and self-correction are all implemented from scratch on top of the Groq Python SDK. Given an issue in a Python repo, the agent:
 
-1. **Plans** the fix (Sonnet 4.6).
-2. **Executes** the work inside a Docker container with `--network none` (Haiku 4.5 driving Read/Edit/Bash/Grep).
-3. **Verifies** the diff with an LLM-as-judge (Sonnet 4.6) before opening a PR.
-4. **Traces** every tool call, token, and cost to Langfuse.
-5. **Reports** metrics: `resolved@1`, cost, latency.
+1. **Plans** the fix (`openai/gpt-oss-120b` via Groq).
+2. **Executes** the work inside a per-task sandbox (temp dir + command whitelist + timeout; container-based mode behind the same interface, see [ADR-003](docs/adr/003-sandbox.md)) — `openai/gpt-oss-20b` driving Read/Edit/Bash/Grep tools.
+3. **Verifies** the diff with an LLM-as-judge (`openai/gpt-oss-120b`) before opening a PR.
+4. **Traces** every tool call, token, and latency to Langfuse.
+5. **Reports** metrics: `resolved@1`, latency.
 
 ## Why this project exists
 
-Most "AI coding" demos are toy chatbots. This is the opposite: a defensible system with sandboxing, evals, regression gates in CI, and honest metrics in the README — built to be auditable in a technical interview, line by line.
+Most "AI coding" demos either wrap a framework (LangChain, LangGraph, Claude Agent SDK) or are toy chatbots. This is the opposite: every layer of the agent loop is hand-built, defendible line by line in a code review, and evaluated against SWE-bench Lite. Vendor-agnostic by design — the LLM client is a thin wrapper, so switching providers is a one-file change.
 
 Companion project: [claude-docs-rag](https://github.com/alvarocanoo/claude-docs-rag) — production RAG over the Anthropic Claude API docs.
 
-## Target metrics (declared before coding, see ADR-007)
+## Target metrics (declared before coding — see ADR-007)
 
 | Metric | Target | Why |
 |---|---|---|
 | `resolved@1` on my 10 trivial issues | ≥ 70% | Baseline sanity — if this fails, the agent is broken |
-| `resolved@1` on SWE-bench Lite (50-issue subset) | ≥ 25% | SOTA is Claude Opus 4.6 at 62.7%; 25% is defendible for a solo project |
-| Mean cost per issue | ≤ $0.40 | With planner/executor/judge routing across Sonnet 4.6 + Haiku 4.5 |
+| `resolved@1` on SWE-bench Lite (50-issue subset) | TBD after Week 4 | Re-measured against `openai/gpt-oss-120b`; published number replaces this row |
 | Mean wall-clock per issue | ≤ 15 min | Otherwise it does not feel like automation |
-| Sandbox escapes | 0 in 100 runs | Validated via `docker inspect` + PreToolUse Bash whitelist |
+| Cost per issue | $0 (free tier) | Groq free tier; documented rate-limit fallback in ADR-004 |
+| Sandbox escapes | 0 in 100 runs | Validated via filesystem-snapshot diff + Bash whitelist + timeout |
+| Tests reproducible | 100% (eval suite passes 3× in CI without flakes) | Otherwise the "regression gate" is theatre |
 
-Real measured numbers will replace these targets in this README as soon as Week 2 evals run.
+Numbers will replace targets in this README as soon as Week 2 evals run.
 
 ## Architecture (1 paragraph)
 
-Three Anthropic models in a Planner → Executor → Verifier loop. Executor uses the Claude Agent SDK with restricted `allowed_tools` and a `PreToolUse` hook that whitelists `Bash` calls. All file edits and shell commands run inside a per-task Docker container (`python:3.12-slim`, `--network none`, 20-minute watchdog, memory cap). Postgres stores run metadata and JSONB traces; Langfuse captures the full agent timeline; Next.js dashboard exposes both.
+Three open-source models on Groq in a Planner → Executor → Verifier loop. The LLM client is a thin Groq SDK wrapper (`src/issue_to_pr/llm/client.py`) — all cost and trace hooks live there. Executor calls a hand-built tool loop with `PreToolUse` validation that whitelists Bash, restricts CWD and clears env. The sandbox interface (`src/issue_to_pr/sandbox/runner.py`) has two implementations: `LocalSubprocessRunner` (default, no admin needed — tempdir + snapshot diff + timeout) and `ContainerRunner` (Podman/Docker per-task — for production). Postgres stores run metadata + JSONB traces; Langfuse captures the full agent timeline; Next.js dashboard exposes both.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the ADR index in [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Stack
 
-- **Agent core**: `claude-agent-sdk` (Python), Anthropic models (`claude-sonnet-4-6`, `claude-haiku-4-5-20251001`)
-- **Sandbox**: Docker per-task (`--network none`, RW mount of cloned repo)
-- **Storage**: Postgres 16 (JSONB traces)
-- **Observability**: Langfuse self-hosted
-- **API**: FastAPI + SSE
-- **Frontend**: Next.js 16 (planned Week 3)
-- **Eval**: SWE-bench Lite subset + custom trivial set
-- **Tooling**: uv (Python), ruff, mypy strict, pytest
+- **Agent core**: `groq` Python SDK, models `openai/gpt-oss-120b` (planner, verifier) and `openai/gpt-oss-20b` (executor).
+- **Sandbox**: pluggable interface — `LocalSubprocessRunner` (default) or `ContainerRunner` (Podman).
+- **Storage**: Postgres 16 — JSONB traces. Local dev uses `pgsql-portable` (no Docker required), see [docs/POSTGRES.md](docs/POSTGRES.md).
+- **Observability**: Langfuse self-hosted.
+- **API**: FastAPI + SSE.
+- **Frontend**: Next.js 16 (planned Week 3).
+- **Eval**: SWE-bench Lite subset + custom trivial set.
+- **Tooling**: uv, ruff, mypy strict, pytest.
 
 ## Quickstart (local dev)
 
-> Requires: Windows 11 + PowerShell 5.1, Docker Desktop, Python 3.12, [uv](https://docs.astral.sh/uv/) ≥ 0.11, [gh CLI](https://cli.github.com/) authenticated, an `ANTHROPIC_API_KEY`.
+> Requires: Windows 11 + PowerShell 5.1, Python 3.12, [uv](https://docs.astral.sh/uv/) ≥ 0.11, [gh CLI](https://cli.github.com/) authenticated, a free [Groq API key](https://console.groq.com/keys).
 
 ```powershell
 git clone https://github.com/alvarocanoo/issue-to-pr-agent.git
 cd issue-to-pr-agent
-Copy-Item .env.example .env  # then edit ANTHROPIC_API_KEY
+Copy-Item .env.example .env  # then paste your GROQ_API_KEY
 uv sync
-docker compose up -d
 uv run pytest
 ```
 
@@ -70,10 +70,11 @@ uv run issue-to-pr run --issue evals/trivial_issues/001-typo.yaml
 
 ## Roadmap
 
-- [x] Week 1: walking skeleton (sandbox, executor, 1 trivial issue resolved)
+- [x] Week 1: walking skeleton + CI green (uv project, settings, CLI, GitHub Actions)
+- [ ] Week 1 cont.: Groq LLM client + sandbox runner (LocalSubprocessRunner) + 1 trivial issue resolved end-to-end
 - [ ] Week 2: planner + verifier + 10 trivial issues + CI eval gate
 - [ ] Week 3: Langfuse traces + Postgres persistence + FastAPI + Next.js dashboard
-- [ ] Week 4: SWE-bench Lite subset eval + sandbox hardening + deploy
+- [ ] Week 4: SWE-bench Lite subset eval + sandbox hardening (Podman runner) + deploy
 - [ ] Weeks 5-6: ablation studies + blog posts + README final with measured numbers
 
 ## License

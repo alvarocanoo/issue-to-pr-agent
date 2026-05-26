@@ -17,9 +17,10 @@ def test_version_is_semver_like() -> None:
 
 def test_settings_load_with_defaults() -> None:
     s = get_settings()
-    assert s.planner_model.startswith("claude-")
-    assert s.executor_model.startswith("claude-")
-    assert s.verifier_model.startswith("claude-")
+    assert s.planner_model
+    assert s.executor_model
+    assert s.verifier_model
+    assert s.groq_base_url.startswith("https://")
     assert 60 <= s.sandbox_timeout_seconds <= 3600
 
 

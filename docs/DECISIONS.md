@@ -7,11 +7,12 @@ and not aspirational.
 | # | Title | Status | Lands in week |
 |---|---|---|---|
 | 000 | [Template](adr/000-template.md) | — | — |
-| 001 | Claude Agent SDK over Client SDK + manual tool loop | planned | 2 |
+| 001 | Hand-rolled tool loop over agent frameworks (LangChain / Agent SDK) | planned | 1 |
 | 002 | Planner / Executor / Verifier split (ReAct + Reflexion + LLM-as-judge) | planned | 2 |
-| 003 | Docker `--network none` sandbox over firejail / nsjail / E2B | planned | 1 |
-| 004 | Multi-model routing (Sonnet planner + Haiku executor + Sonnet verifier) | planned | 4 |
+| 003 | Pluggable sandbox (LocalSubprocessRunner default, ContainerRunner opt-in) | planned | 1 |
+| 004 | Multi-model routing on Groq (`gpt-oss-120b` planner+verifier, `gpt-oss-20b` executor) | planned | 4 |
 | 005 | Langfuse self-hosted over Helicone / Phoenix / OpenTelemetry-only | planned | 3 |
 | 006 | Postgres + JSONB over SQLite or a document DB | planned | 3 |
 | 007 | SWE-bench Lite over Verified / full SWE-bench | planned | 4 |
 | 008 | No fine-tuning: prompt + routing is the contract | planned | 5 |
+| 009 | Groq Cloud + open-source models over Anthropic / OpenAI APIs | planned | 1 |

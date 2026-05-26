@@ -4,7 +4,10 @@
 
 ## What this repo is
 
-Production-grade autonomous coding agent. Given a GitHub issue URL in a Python repo, opens a PR with the fix. Built on Claude Agent SDK (Python). Components: Planner → Executor → Verifier, each defendible in a technical interview against the paper that justifies it.
+Production-grade autonomous coding agent. Given a GitHub issue URL in a Python repo, opens a PR
+with the fix. Hand-rolled tool loop over Groq Cloud + open-source models (`openai/gpt-oss-120b`,
+`openai/gpt-oss-20b`). Components: Planner → Executor → Verifier, each defendible in a technical
+interview against the paper that justifies it.
 
 Companion project: `../claude-docs-rag` (RAG over Anthropic API docs). Do NOT touch it from here.
 
@@ -16,15 +19,21 @@ Companion project: `../claude-docs-rag` (RAG over Anthropic API docs). Do NOT to
 - **Tests**: `uv run pytest`. Unit tests in `tests/unit/`, integration in `tests/integration/`.
 - **Secrets**: `.env` only (gitignored). Use `pydantic-settings` to load. Never hardcode keys.
 - **Async I/O** where it touches DB or network (FastAPI, asyncpg).
-- **All Anthropic calls** go through `claude_agent_sdk.query()` — never direct `anthropic.Anthropic()`. The SDK gives us tool loop, hooks and sessions for free.
+- **All LLM calls** go through `LLMClient` in `src/issue_to_pr/llm/client.py` (single Groq SDK
+  wrapper). Never instantiate `groq.Groq()` directly outside that module — keeps cost/token
+  tracking and trace hooks in one place.
 
 ## Architecture invariants (do NOT violate without a new ADR)
 
-1. **Every Bash command from the agent runs inside Docker `--network none`**. The `PreToolUse` hook in `executor/hooks.py` validates this. If you bypass the hook, write an ADR first.
-2. **Planner is Sonnet, Executor is Haiku, Verifier is Sonnet** (model IDs in `settings.py`). Swap → ADR.
+1. **Every Bash command from the agent runs inside the sandbox** (`src/issue_to_pr/sandbox/`).
+   The `PreToolUse` validator in `executor/hooks.py` whitelists commands; the runner restricts
+   cwd, env, and timeout. Bypassing it requires a new ADR.
+2. **Planner = `openai/gpt-oss-120b`, Executor = `openai/gpt-oss-20b`, Verifier = `openai/gpt-oss-120b`**
+   (IDs in `settings.py`). Swap → ADR.
 3. **No retrieval / vector DB** in this project. That's `claude-docs-rag`'s job.
 4. **No fine-tuning**. Prompt + routing is the contract — see ADR-008.
-5. **Every component has tests**. Coverage is not the metric; "can I delete this and CI tells me" is.
+5. **Every component has tests**. Coverage is not the metric; "can I delete this and CI tells me"
+   is.
 
 ## Commands you'll use
 
@@ -36,9 +45,7 @@ uv run pytest -m "not evals"                     # skip eval suite (faster)
 uv run pytest tests/unit/test_sandbox.py -v      # single file
 uv run ruff check --fix; uv run ruff format      # lint + format
 uv run mypy src/                                 # type check strict
-uv run issue-to-pr --help                        # CLI entrypoint (once cli.py exists)
-docker compose up -d postgres                    # start Postgres
-docker compose logs -f postgres                  # tail logs
+uv run issue-to-pr --help                        # CLI entrypoint
 ```
 
 ## Pre-commit checks (manual until pre-commit hook is added)
@@ -61,11 +68,11 @@ Do NOT push if: tests fail, lint red, eval metric dropped, or block incomplete.
 
 ## Anti-patterns specific to this project
 
-- ❌ Calling `anthropic.Anthropic()` directly. Use `claude_agent_sdk.query()`.
-- ❌ Running the agent's `Bash` outside Docker. Always via `sandbox/docker_runner.py`.
+- ❌ Instantiating `groq.Groq()` directly outside `src/issue_to_pr/llm/client.py`.
+- ❌ Running the agent's `Bash` outside the sandbox. Always via `sandbox/runner.py`.
 - ❌ Adding a new model alias without updating `settings.py` and ADR-004.
 - ❌ Catching `Exception:` broadly. Catch the specific type or let it propagate.
-- ❌ Mocking Anthropic in tests beyond fixtures — integration tests must hit the real API on a tiny prompt.
+- ❌ Mocking Groq in tests beyond fixtures — integration tests must hit the real API on a tiny prompt.
 - ❌ Touching `web/` (Next.js) until Week 3.
 
 ## When in doubt

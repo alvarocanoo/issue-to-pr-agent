@@ -106,6 +106,39 @@ def _run_one_executor(
         shutil.rmtree(workspace, ignore_errors=True)
 
 
+def _serialise_history(
+    history: tuple[tuple[Any, Any], ...],
+) -> list[dict[str, Any]]:
+    """Turn the orchestrator's history tuple into a JSON-friendly list for the runs table.
+
+    We keep per-iteration metrics that the dashboard timeline needs (token cost, verifier
+    verdict, tool-call count) but avoid embedding the raw assistant prompts/responses to
+    keep the row small.
+    """
+    out: list[dict[str, Any]] = []
+    for i, (execution, verdict) in enumerate(history, start=1):
+        out.append(
+            {
+                "iteration": i,
+                "execution": {
+                    "executor_iterations": execution.iterations,
+                    "exit_reason": execution.exit_reason,
+                    "tool_calls_count": len(execution.tool_calls),
+                    "prompt_tokens": execution.total_prompt_tokens,
+                    "completion_tokens": execution.total_completion_tokens,
+                    "elapsed_seconds": round(execution.elapsed_seconds, 2),
+                    "verify_exit_code": execution.verify_exit_code,
+                },
+                "verdict": {
+                    "approved": verdict.approved,
+                    "reasoning": verdict.reasoning,
+                    "feedback_for_executor": verdict.feedback_for_executor,
+                },
+            }
+        )
+    return out
+
+
 def _run_one_orchestrator(
     yaml_path: Path,
     orchestrator: Orchestrator,
@@ -144,6 +177,7 @@ def _run_one_orchestrator(
                     reflexion_iterations=outcome.reflexion_iterations,
                     plan=asdict(outcome.plan),
                     verdict=asdict(outcome.final_verdict),
+                    history=_serialise_history(outcome.history),
                 )
             except Exception as exc:  # noqa: BLE001  # persistence failure must not lose the result
                 print(f"[eval]   WARNING: could not persist run {spec.id}: {exc}", flush=True)

@@ -10,6 +10,7 @@ before inserting, leaving any real runs untouched.
 from __future__ import annotations
 
 import random
+from typing import Any
 
 from issue_to_pr.settings import get_settings
 from issue_to_pr.storage import Storage
@@ -61,7 +62,7 @@ def main() -> int:
             if mode == "orchestrator"
             else {}
         )
-        verdict = (
+        final_verdict = (
             {
                 "approved": success,
                 "reasoning": (
@@ -77,6 +78,55 @@ def main() -> int:
             else {}
         )
 
+        # Build synthetic history with one rejected attempt for reflexion=2 runs.
+        history: list[dict[str, Any]] = []
+        if mode == "orchestrator" and reflexion is not None:
+            if reflexion >= 2:
+                history.append(
+                    {
+                        "iteration": 1,
+                        "execution": {
+                            "executor_iterations": rng.randint(4, 8),
+                            "exit_reason": "done",
+                            "tool_calls_count": rng.randint(3, 6),
+                            "prompt_tokens": int(prompt_t * 0.4),
+                            "completion_tokens": int(completion_t * 0.3),
+                            "elapsed_seconds": round(elapsed * 0.45, 2),
+                            "verify_exit_code": 1,
+                        },
+                        "verdict": {
+                            "approved": False,
+                            "reasoning": (
+                                "Tests still fail; the assertion error suggests the fix "
+                                "missed the edge case described in the task."
+                            ),
+                            "feedback_for_executor": (
+                                "Re-read the failing assertion in the verify output and "
+                                "extend the function to cover the edge case."
+                            ),
+                        },
+                    }
+                )
+            history.append(
+                {
+                    "iteration": len(history) + 1,
+                    "execution": {
+                        "executor_iterations": exec_iter,
+                        "exit_reason": "done",
+                        "tool_calls_count": rng.randint(5, 9),
+                        "prompt_tokens": prompt_t
+                        - sum(h["execution"]["prompt_tokens"] for h in history),
+                        "completion_tokens": completion_t
+                        - sum(h["execution"]["completion_tokens"] for h in history),
+                        "elapsed_seconds": round(
+                            elapsed - sum(h["execution"]["elapsed_seconds"] for h in history), 2
+                        ),
+                        "verify_exit_code": 0 if success else 1,
+                    },
+                    "verdict": final_verdict,
+                }
+            )
+
         storage.insert_run(
             task_id=task_id,
             mode=mode,
@@ -88,7 +138,8 @@ def main() -> int:
             elapsed_seconds=elapsed,
             reflexion_iterations=reflexion,
             plan=plan,
-            verdict=verdict,
+            verdict=final_verdict,
+            history=history,
         )
         inserted += 1
 

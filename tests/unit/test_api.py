@@ -26,6 +26,7 @@ def _stored_run(*, run_id: int = 1, task_id: str = "t") -> StoredRun:
         finished_at="2026-05-26T10:00:02+00:00",
         plan={"steps": ["s"]},
         verdict={"approved": True, "reasoning": "ok"},
+        history=[],
     )
 
 

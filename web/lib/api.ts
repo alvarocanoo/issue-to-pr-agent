@@ -2,6 +2,24 @@
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8765";
 
+export type HistoryEntry = {
+  iteration: number;
+  execution: {
+    executor_iterations: number;
+    exit_reason: string;
+    tool_calls_count: number;
+    prompt_tokens: number;
+    completion_tokens: number;
+    elapsed_seconds: number;
+    verify_exit_code: number;
+  };
+  verdict: {
+    approved: boolean;
+    reasoning: string;
+    feedback_for_executor: string | null;
+  };
+};
+
 export type StoredRun = {
   id: number;
   task_id: string;
@@ -17,6 +35,7 @@ export type StoredRun = {
   finished_at: string | null;
   plan: Record<string, unknown>;
   verdict: Record<string, unknown>;
+  history: HistoryEntry[];
 };
 
 export type Stats = {

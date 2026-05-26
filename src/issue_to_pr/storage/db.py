@@ -40,6 +40,7 @@ class StoredRun:
     finished_at: str | None
     plan: dict[str, Any]
     verdict: dict[str, Any]
+    history: list[dict[str, Any]]
 
 
 class Storage:
@@ -165,7 +166,7 @@ class Storage:
                    verify_exit_code, prompt_tokens, completion_tokens, elapsed_seconds,
                    started_at::text AS started_at,
                    finished_at::text AS finished_at,
-                   plan, verdict
+                   plan, verdict, history
             FROM runs
             ORDER BY started_at DESC
             LIMIT %(limit)s OFFSET %(offset)s
@@ -181,7 +182,7 @@ class Storage:
                    verify_exit_code, prompt_tokens, completion_tokens, elapsed_seconds,
                    started_at::text AS started_at,
                    finished_at::text AS finished_at,
-                   plan, verdict
+                   plan, verdict, history
             FROM runs
             WHERE id = %(id)s
         """
@@ -207,4 +208,5 @@ class Storage:
             finished_at=row["finished_at"],
             plan=row["plan"] or {},
             verdict=row["verdict"] or {},
+            history=row.get("history") or [],
         )

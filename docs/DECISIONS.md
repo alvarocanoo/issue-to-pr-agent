@@ -1,18 +1,29 @@
 # Architecture Decision Records
 
 Each ADR captures a non-obvious technical decision with the alternatives considered, the choice
-made, and the reasoning. Written *after* implementing the component, so the rationale is real
-and not aspirational.
+made, and the reasoning. Written *after* implementing the component when possible, so the
+rationale is real and not aspirational.
 
-| # | Title | Status | Lands in week |
+| # | Title | Status | Implemented in |
 |---|---|---|---|
 | 000 | [Template](adr/000-template.md) | — | — |
-| 001 | Hand-rolled tool loop over agent frameworks (LangChain / Agent SDK) | planned | 1 |
-| 002 | Planner / Executor / Verifier split (ReAct + Reflexion + LLM-as-judge) | planned | 2 |
-| 003 | Pluggable sandbox (LocalSubprocessRunner default, ContainerRunner opt-in) | planned | 1 |
-| 004 | Multi-model routing on Groq (`gpt-oss-120b` planner+verifier, `gpt-oss-20b` executor) | planned | 4 |
-| 005 | Langfuse self-hosted over Helicone / Phoenix / OpenTelemetry-only | planned | 3 |
-| 006 | Postgres + JSONB over SQLite or a document DB | planned | 3 |
-| 007 | SWE-bench Lite over Verified / full SWE-bench | planned | 4 |
-| 008 | No fine-tuning: prompt + routing is the contract | planned | 5 |
-| 009 | Groq Cloud + open-source models over Anthropic / OpenAI APIs | planned | 1 |
+| 001 | [Hand-rolled tool loop over an agent framework](adr/001-hand-rolled-tool-loop.md) | accepted | Week 1: `executor/` + `llm/client.py` |
+| 002 | Planner / Executor / Verifier split (ReAct + Reflexion + LLM-as-judge) | planned | Week 2 |
+| 003 | [Pluggable sandbox (Local default, Container opt-in)](adr/003-pluggable-sandbox.md) | accepted (Local impl.; Container planned) | Week 1: `sandbox/` |
+| 004 | [Multi-model routing on Groq Cloud](adr/004-multi-model-routing.md) | accepted (executor live; planner/verifier wire-up Week 2) | Week 1: `settings.py` |
+| 005 | Langfuse self-hosted over Helicone / Phoenix / OpenTelemetry-only | planned | Week 3 |
+| 006 | Postgres + JSONB over SQLite or a document DB | planned | Week 3 |
+| 007 | [SWE-bench Lite over Verified / full SWE-bench](adr/007-swe-bench-lite.md) | planned (50-subset Week 4) | Week 4 |
+| 008 | [No fine-tuning — prompt + routing is the contract](adr/008-no-fine-tuning.md) | accepted | always (negative decision) |
+| 009 | [Groq Cloud + open-source models over Anthropic / OpenAI APIs](adr/009-groq-over-anthropic-openai.md) | accepted | Week 1: pivot in commit `725e7db` |
+
+## How to use this index
+
+- "accepted" = decision lived through at least one implementation cycle without being reversed.
+- "planned" = decision will be written when the corresponding code lands; placeholder row here
+  so reviewers know the gap is deliberate.
+- Each ADR file is ~200 lines, self-contained, follows the template in
+  [adr/000-template.md](adr/000-template.md): Context → Alternatives → Decision →
+  Consequences → Verification.
+- When code violates an ADR, the fix is either reverting the code or writing a superseding ADR
+  (status `superseded by NNN`). Silently ignoring an ADR is a project-level bug.

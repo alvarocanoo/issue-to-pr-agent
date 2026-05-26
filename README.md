@@ -124,6 +124,7 @@ git clone https://github.com/alvarocanoo/issue-to-pr-agent.git
 cd issue-to-pr-agent
 Copy-Item .env.example .env  # then paste your GROQ_API_KEY
 uv sync
+uv run pre-commit install    # wires ruff + mypy as pre-commit hooks
 uv run pytest
 ```
 

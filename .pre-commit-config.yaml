@@ -1,0 +1,37 @@
+# Mirrors the CI gates in .github/workflows/ci.yml so the same checks block local commits.
+# Install once with: uv run pre-commit install
+#
+# Note: mypy is wired as a *local* hook because mypy --strict needs the project's installed
+# deps to resolve types. Running it from an isolated venv (the default pre-commit pattern)
+# would miss them. The tradeoff is that the local hook depends on `uv sync` being current.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: ^web/(tsconfig\.json|\.vscode/)
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+        exclude: ^docs/images/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy --strict (src/)
+        entry: uv run mypy src/
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$

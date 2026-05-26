@@ -48,15 +48,20 @@ uv run mypy src/                                 # type check strict
 uv run issue-to-pr --help                        # CLI entrypoint
 ```
 
-## Pre-commit checks (manual until pre-commit hook is added)
+## Pre-commit checks
 
-1. `uv run ruff check --fix` — must end clean
-2. `uv run ruff format`
-3. `uv run mypy src/` — must end clean
-4. `uv run pytest -m "not evals"` — all green
+Hooks 1-3 below run automatically on `git commit` via `.pre-commit-config.yaml` (install
+once with `uv run pre-commit install`). Hooks 4-5 are still manual — pytest is too slow for
+every commit and the eval suite hits a paid API.
+
+1. `uv run ruff check --fix` — auto-runs as `ruff-check` hook
+2. `uv run ruff format` — auto-runs as `ruff-format` hook
+3. `uv run mypy src/` — auto-runs as the local `mypy` hook
+4. `uv run pytest -m "not evals"` — all green (manual)
 5. (when eval suite exists) `uv run python -m evals.runner --set trivial` — `resolved@1 ≥ 70%`
 
-If any of those fail: do NOT commit. Fix root cause.
+If any of those fail: do NOT commit. Fix root cause. Bypassing the hook with `--no-verify`
+counts as a project-level bug.
 
 ## Push policy (agreed with user)
 

@@ -23,6 +23,8 @@ The agent persists every run to Postgres; a Next.js 16 dashboard at `web/` reads
 
 ![Run detail: plan, verdict, raw payload](docs/images/dashboard-detail.png)
 
+![A/B comparison: 10 trivial issues, baseline vs orchestrator, +70 pp resolved@1](docs/images/dashboard-compare.png)
+
 Run locally:
 
 ```powershell

@@ -169,7 +169,7 @@ def test_make_workspace_rejects_non_dir(tmp_path: Path) -> None:
         make_workspace_from(f, tmp_path / "ws")
 
 
-def test_custom_whitelist_blocks_python(tmp_path: Path) -> None:
+def test_custom_whitelist_blocks_python() -> None:
     runner = LocalSubprocessRunner(timeout_seconds=10, whitelist=["echo"])
     runner.validate("echo hi")
     with pytest.raises(BlockedCommandError):

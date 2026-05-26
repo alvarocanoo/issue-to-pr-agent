@@ -15,6 +15,7 @@ dependencies = [
     "typer>=0.12",
     "rich>=13.7",
     "httpx>=0.27",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -52,11 +53,12 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC", "S", "RUF"]
+select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC", "S", "RUF", "BLE", "ARG"]
 ignore = ["S101"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S"]
+"src/issue_to_pr/cli.py" = ["B008"]  # typer requires function calls in arg defaults
 
 [tool.mypy]
 python_version = "3.12"

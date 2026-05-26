@@ -1,0 +1,18 @@
+id: "001-typo"
+description: |
+  A unit test fails because `greet.py` has a typo: the function returns
+  "helo NAME!" instead of "hello NAME!".
+
+  Read the files, fix the typo in `greet.py`, and ensure the test passes.
+  Do not modify the test file.
+files:
+  greet.py: |
+    def greet(name: str) -> str:
+        return f"helo {name}!"
+  test_greet.py: |
+    from greet import greet
+
+
+    def test_greet() -> None:
+        assert greet("world") == "hello world!"
+verify_command: "pytest -q test_greet.py"

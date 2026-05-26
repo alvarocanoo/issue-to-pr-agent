@@ -49,8 +49,8 @@ def _fake_groq_response(
 
 def _build_client(fake_resp: MagicMock) -> LLMClient:
     client = LLMClient(api_key="gsk_fake")
-    client._groq = MagicMock()  # type: ignore[attr-defined]
-    client._groq.chat.completions.create.return_value = fake_resp  # type: ignore[attr-defined]
+    client._groq = MagicMock()
+    client._groq.chat.completions.create.return_value = fake_resp
     return client
 
 

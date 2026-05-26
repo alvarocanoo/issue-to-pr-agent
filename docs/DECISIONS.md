@@ -16,6 +16,7 @@ rationale is real and not aspirational.
 | 007 | [SWE-bench Lite over Verified / full SWE-bench](adr/007-swe-bench-lite.md) | planned (50-subset Week 4) | Week 4 |
 | 008 | [No fine-tuning — prompt + routing is the contract](adr/008-no-fine-tuning.md) | accepted | always (negative decision) |
 | 009 | [Groq Cloud + open-source models over Anthropic / OpenAI APIs](adr/009-groq-over-anthropic-openai.md) | accepted | Week 1: pivot in commit `725e7db` |
+| 010 | [Run persistence + read-only dashboard observability](adr/010-run-persistence-and-observability.md) | accepted | Week 3.1-3.2: `storage/`, `api/`, `web/` |
 
 ## How to use this index
 

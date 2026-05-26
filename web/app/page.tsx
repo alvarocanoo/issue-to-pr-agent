@@ -59,7 +59,15 @@ export default async function Home() {
         {stats ? <StatsBar stats={stats} /> : null}
 
         <section className="mt-10">
-          <h2 className="mb-3 text-lg font-medium text-zinc-200">Recent runs</h2>
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="text-lg font-medium text-zinc-200">Recent runs</h2>
+            <Link
+              href="/compare"
+              className="rounded-md border border-emerald-700/60 bg-emerald-900/30 px-3 py-1 text-xs font-medium text-emerald-200 hover:bg-emerald-900/50"
+            >
+              A/B comparison →
+            </Link>
+          </div>
           {runs.length === 0 ? <EmptyState /> : <RunsTable runs={runs} />}
         </section>
       </div>

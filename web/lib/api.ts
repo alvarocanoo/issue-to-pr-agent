@@ -83,6 +83,28 @@ export async function fetchRuns(limit = 50): Promise<{ items: StoredRun[]; count
   return jget<{ items: StoredRun[]; count: number }>(`/runs?limit=${limit}`);
 }
 
+export type RunPair = {
+  task_id: string;
+  baseline: StoredRun | null;
+  orchestrator: StoredRun | null;
+};
+
+export async function fetchRunPairs(): Promise<RunPair[]> {
+  const { items } = await fetchRuns(200);
+  const byTask = new Map<string, RunPair>();
+  for (const r of items) {
+    const entry = byTask.get(r.task_id) ?? {
+      task_id: r.task_id,
+      baseline: null,
+      orchestrator: null,
+    };
+    if (r.mode === "executor") entry.baseline = r;
+    else if (r.mode === "orchestrator") entry.orchestrator = r;
+    byTask.set(r.task_id, entry);
+  }
+  return Array.from(byTask.values()).sort((a, b) => a.task_id.localeCompare(b.task_id));
+}
+
 export async function fetchRun(id: number): Promise<StoredRun> {
   if (USE_STATIC) {
     const found = (staticRuns.items as StoredRun[]).find((r) => r.id === id);

@@ -61,7 +61,11 @@ class IssueResult:
         }
 
 
-def _run_one_executor(yaml_path: Path, executor: Executor) -> IssueResult:
+def _run_one_executor(
+    yaml_path: Path,
+    executor: Executor,
+    storage: Storage | None = None,
+) -> IssueResult:
     """Resolve one issue with the Executor only (baseline). Cleans workspace."""
     spec = load_issue(yaml_path)
     workspace = Path(tempfile.mkdtemp(prefix=f"itp-eval-{spec.id}-"))
@@ -74,6 +78,20 @@ def _run_one_executor(yaml_path: Path, executor: Executor) -> IssueResult:
             verify_command=spec.verify_command,
         )
         outcome = executor.run(task)
+        if storage is not None:
+            try:
+                storage.insert_run(
+                    task_id=spec.id,
+                    mode="executor",
+                    success=outcome.success,
+                    executor_iterations=outcome.iterations,
+                    verify_exit_code=outcome.verify_exit_code,
+                    prompt_tokens=outcome.total_prompt_tokens,
+                    completion_tokens=outcome.total_completion_tokens,
+                    elapsed_seconds=outcome.elapsed_seconds,
+                )
+            except Exception as exc:  # noqa: BLE001
+                print(f"[eval]   WARNING: could not persist run {spec.id}: {exc}", flush=True)
         return IssueResult(
             id=spec.id,
             success=outcome.success,
@@ -88,8 +106,16 @@ def _run_one_executor(yaml_path: Path, executor: Executor) -> IssueResult:
         shutil.rmtree(workspace, ignore_errors=True)
 
 
-def _run_one_orchestrator(yaml_path: Path, orchestrator: Orchestrator) -> IssueResult:
-    """Resolve one issue with the full Planner -> Executor -> Verifier loop."""
+def _run_one_orchestrator(
+    yaml_path: Path,
+    orchestrator: Orchestrator,
+    storage: Storage | None = None,
+) -> IssueResult:
+    """Resolve one issue with the full Planner -> Executor -> Verifier loop.
+
+    If `storage` is provided, the run is persisted immediately after the orchestrator
+    returns (and BEFORE any later iteration that might rate-limit and crash).
+    """
     spec = load_issue(yaml_path)
     workspace = Path(tempfile.mkdtemp(prefix=f"itp-eval-{spec.id}-"))
     try:
@@ -102,6 +128,25 @@ def _run_one_orchestrator(yaml_path: Path, orchestrator: Orchestrator) -> IssueR
         )
         outcome = orchestrator.run(task)
         final = outcome.final_execution
+        if storage is not None:
+            from dataclasses import asdict
+
+            try:
+                storage.insert_run(
+                    task_id=spec.id,
+                    mode="orchestrator",
+                    success=outcome.success,
+                    executor_iterations=final.iterations,
+                    verify_exit_code=final.verify_exit_code,
+                    prompt_tokens=outcome.total_prompt_tokens,
+                    completion_tokens=outcome.total_completion_tokens,
+                    elapsed_seconds=outcome.elapsed_seconds,
+                    reflexion_iterations=outcome.reflexion_iterations,
+                    plan=asdict(outcome.plan),
+                    verdict=asdict(outcome.final_verdict),
+                )
+            except Exception as exc:  # noqa: BLE001  # persistence failure must not lose the result
+                print(f"[eval]   WARNING: could not persist run {spec.id}: {exc}", flush=True)
         return IssueResult(
             id=spec.id,
             success=outcome.success,
@@ -141,11 +186,13 @@ def run_eval_set(
     executor: Executor | None = None,
     orchestrator: Orchestrator | None = None,
     use_orchestrator: bool = True,
+    storage: Storage | None = None,
 ) -> dict[str, Any]:
     """Run every `*.yaml` in `set_dir` and return an aggregated report dict.
 
     Inject `orchestrator` (preferred) or `executor` for tests; otherwise build from settings.
     `use_orchestrator=False` falls back to the executor-only path (baseline measurement).
+    Pass `storage` to persist each run row-by-row (survives crashes / rate limits).
     """
     yaml_files = sorted(set_dir.glob("*.yaml"))
     if not yaml_files:
@@ -166,10 +213,10 @@ def run_eval_set(
     for yaml_path in yaml_files:
         print(f"[eval] running {yaml_path.name} ...", flush=True)
         if orchestrator is not None:
-            result = _run_one_orchestrator(yaml_path, orchestrator)
+            result = _run_one_orchestrator(yaml_path, orchestrator, storage=storage)
         else:
             assert executor is not None
-            result = _run_one_executor(yaml_path, executor)
+            result = _run_one_executor(yaml_path, executor, storage=storage)
         status = "PASS" if result.success else "FAIL"
         suffix = (
             f" reflexion={result.reflexion_iterations} approved={result.verifier_approved}"
@@ -230,23 +277,31 @@ def main(argv: list[str] | None = None) -> int:
     else:
         raise SystemExit(f"unknown set: {args.set}")
 
-    report = run_eval_set(set_dir, use_orchestrator=not args.executor_only)
+    storage: Storage | None = None
+    if args.persist:
+        settings = get_settings()
+        storage = Storage(settings.database_url)
+        storage.init_schema()
+        print("[eval] persistence ON: each run is committed as it finishes", flush=True)
+
+    report = run_eval_set(
+        set_dir,
+        use_orchestrator=not args.executor_only,
+        storage=storage,
+    )
     serialised = json.dumps(report, indent=2)
     print(serialised)
     if args.out:
         args.out.write_text(serialised, encoding="utf-8")
         print(f"[eval] report written to {args.out}", flush=True)
 
-    if args.persist:
-        settings = get_settings()
-        storage = Storage(settings.database_url)
-        storage.init_schema()
+    if storage is not None:
         report_id = storage.insert_eval_report(
             set_name=args.set,
             mode="executor" if args.executor_only else "orchestrator",
             report=report,
         )
-        print(f"[eval] persisted as eval_reports.id={report_id}", flush=True)
+        print(f"[eval] aggregate report persisted as eval_reports.id={report_id}", flush=True)
 
     return 0 if report["resolved_at_1"] >= args.threshold else 1
 
